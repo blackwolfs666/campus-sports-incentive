@@ -68,6 +68,10 @@
   border-color: #e5e7eb;
 }
 
+.admin-btn.generate {
+  grid-column: 1 / -1;
+}
+
 .admin-btn.muted {
   background: #f3f4f6;
   color: #4b5563;

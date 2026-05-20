@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user_sync
 from app.core.database import get_db, engine
-from app.models.models import Activity, ActivityParticipant, Prize, StepRecord, User, Department, Winner
+from app.models.models import Activity, ActivityParticipant, ActivityPrize, Prize, StepRecord, User, Department, Winner
 from app.schemas.schemas import ActivityJoinResponse, ActivityListResponse, ActivityPrizeItem, ActivityResponse
 from app.services.activity_awards import ensure_activity_prize_mappings
 
@@ -225,6 +225,8 @@ def ensure_activity_tables() -> None:
         return
     Activity.__table__.create(bind=engine, checkfirst=True)
     ActivityParticipant.__table__.create(bind=engine, checkfirst=True)
+    Prize.__table__.create(bind=engine, checkfirst=True)
+    ActivityPrize.__table__.create(bind=engine, checkfirst=True)
     _tables_ready = True
 
 

@@ -250,6 +250,8 @@ Page({
     status: '',
     statusText: '',
     readonly: false,
+    canGenerateWinners: false,
+    generatingWinners: false,
     canEditBasic: true,
     canEditFull: true,
     canEditMax: true,
@@ -350,6 +352,7 @@ Page({
         dateTimeParts: buildDateTimeParts(form),
         status: activity.status,
         statusText: activity.statusText,
+        canGenerateWinners: activity.canGenerateWinners === true || (activity.myAdminRole === 'owner' && activity.status === 'ended'),
         canEditBasic,
         canEditFull: !readonly && canEditFull,
         canEditMax,
@@ -896,6 +899,42 @@ Page({
     }).catch((err) => {
       const detail = err?.data?.detail || '保存失败'
       wx.showToast({ title: String(detail).slice(0, 18), icon: 'none' })
+    })
+  },
+
+  generateWinners() {
+    if (!this.data.canGenerateWinners) {
+      wx.showToast({ title: '活动结束后根管理员可生成', icon: 'none' })
+      return
+    }
+    if (this.data.generatingWinners) return
+
+    wx.showModal({
+      title: '生成获奖记录',
+      content: '将按当前活动规则生成或更新获奖记录，是否继续？',
+      confirmText: '生成',
+      success: (res) => {
+        if (!res.confirm) return
+        const app = getApp()
+        this.setData({ generatingWinners: true })
+        wx.showLoading({ title: '生成中' })
+        app.request({
+          url: `/admin/activities/${this.data.id}/winners/generate`,
+          method: 'POST'
+        }).then((result) => {
+          wx.showModal({
+            title: '生成完成',
+            content: `新增：${result.created || 0}\n更新：${result.updated || 0}\n跳过：${result.skipped || 0}\n总数：${result.total || 0}`,
+            showCancel: false
+          })
+        }).catch((err) => {
+          const detail = err?.data?.detail || '生成获奖记录失败'
+          wx.showToast({ title: String(detail).slice(0, 18), icon: 'none' })
+        }).finally(() => {
+          wx.hideLoading()
+          this.setData({ generatingWinners: false })
+        })
+      }
     })
   },
 

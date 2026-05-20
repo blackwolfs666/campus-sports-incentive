@@ -323,6 +323,27 @@ class Activity(Base):
     )
 
 
+class ActivityPrize(Base):
+    __tablename__ = "activity_prizes"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True, comment="活动奖品ID")
+    activity_id = Column(String(100), ForeignKey("activities.id"), nullable=False, comment="活动ID")
+    prize_id = Column(BigInteger, ForeignKey("prizes.id"), nullable=False, comment="奖品ID")
+    rank_label = Column(String(100), nullable=False, default="", comment="名次/规则标签")
+    rank_start = Column(Integer, nullable=True, comment="起始名次")
+    rank_end = Column(Integer, nullable=True, comment="结束名次")
+    quantity = Column(Integer, nullable=True, comment="奖品数量")
+    sort_order = Column(Integer, nullable=False, default=0, comment="排序")
+    created_at = Column(DateTime, server_default=func.now(), comment="创建时间")
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), comment="更新时间")
+
+    __table_args__ = (
+        Index("idx_activity_prize_activity", "activity_id"),
+        Index("idx_activity_prize_prize", "prize_id"),
+        Index("idx_activity_prize_sort", "activity_id", "sort_order"),
+    )
+
+
 class ActivityAdmin(Base):
     __tablename__ = "activity_admins"
 

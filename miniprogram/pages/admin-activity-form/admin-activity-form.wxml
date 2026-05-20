@@ -11,6 +11,13 @@
     <view wx:if="{{isEdit}}" class="status-card">
       <text>{{statusText}}</text>
       <text>{{readonly || !canEditBasic ? '当前账号只能查看活动信息' : '当前状态下不可编辑的字段已自动灰置'}}</text>
+      <view
+        wx:if="{{canGenerateWinners}}"
+        class="form-btn generate-winners {{generatingWinners ? 'disabled' : ''}}"
+        bindtap="generateWinners"
+      >
+        {{generatingWinners ? '生成中' : '生成获奖记录'}}
+      </view>
     </view>
 
     <view class="form-card">

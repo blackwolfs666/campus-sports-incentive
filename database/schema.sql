@@ -175,6 +175,24 @@ CREATE TABLE IF NOT EXISTS activities (
   INDEX idx_activity_date_range (start_date, end_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS activity_prizes (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '活动奖品ID',
+  activity_id VARCHAR(100) NOT NULL COMMENT '活动ID',
+  prize_id BIGINT NOT NULL COMMENT '奖品ID',
+  rank_label VARCHAR(100) NOT NULL DEFAULT '' COMMENT '名次/规则标签',
+  rank_start INT NULL COMMENT '起始名次',
+  rank_end INT NULL COMMENT '结束名次',
+  quantity INT NULL COMMENT '奖品数量',
+  sort_order INT NOT NULL DEFAULT 0 COMMENT '排序',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  CONSTRAINT fk_activity_prizes_activity FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE,
+  CONSTRAINT fk_activity_prizes_prize FOREIGN KEY (prize_id) REFERENCES prizes(id) ON DELETE CASCADE,
+  INDEX idx_activity_prize_activity (activity_id),
+  INDEX idx_activity_prize_prize (prize_id),
+  INDEX idx_activity_prize_sort (activity_id, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS activity_participants (
   id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '活动参与ID',
   activity_id VARCHAR(100) NOT NULL COMMENT '活动ID',

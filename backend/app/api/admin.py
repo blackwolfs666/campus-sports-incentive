@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user_sync
 from app.core.database import engine, get_db
-from app.models.models import Activity, ActivityAdmin, ActivityParticipant, CheckinPost, Department, StepRecord, User
+from app.models.models import Activity, ActivityAdmin, ActivityParticipant, ActivityPrize, CheckinPost, Department, Prize, StepRecord, User
 from app.schemas.schemas import (
     ActivityAdminAddRequest,
     ActivityAdminItem,
@@ -60,6 +60,8 @@ def ensure_admin_tables() -> None:
 
     Activity.__table__.create(bind=engine, checkfirst=True)
     ActivityAdmin.__table__.create(bind=engine, checkfirst=True)
+    Prize.__table__.create(bind=engine, checkfirst=True)
+    ActivityPrize.__table__.create(bind=engine, checkfirst=True)
 
     inspector = inspect(engine)
     columns = {item["name"] for item in inspector.get_columns("activities")}
@@ -387,6 +389,7 @@ def serialize_activity(db: Session, activity: Activity, role: str) -> AdminActiv
         myAdminRole=role,
         canManageAdmins=role == "owner",
         canEdit=role == "owner" and status_key != "ended",
+        canGenerateWinners=role == "owner" and status_key == "ended",
         createdBy=activity.created_by,
     )
 

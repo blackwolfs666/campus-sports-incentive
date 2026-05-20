@@ -61,10 +61,14 @@
   font-weight: 900;
 }
 
-.status-card text:last-child {
+.status-card text + text {
   margin-top: 6rpx;
   color: #9ca3af;
   font-size: 22rpx;
+}
+
+.generate-winners {
+  margin-top: 18rpx;
 }
 
 .form-card {

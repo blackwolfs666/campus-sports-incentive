@@ -37,6 +37,15 @@
       <view class="actions">
         <view class="admin-btn {{!item.canEdit ? 'muted' : ''}}" data-id="{{item.id}}" data-can-edit="{{item.canEdit}}" bindtap="goEdit">{{item.canEdit ? '编辑' : '查看'}}</view>
         <view class="admin-btn outline" data-id="{{item.id}}" bindtap="goAdmins">活动管理员</view>
+        <view
+          wx:if="{{item.myAdminRole === 'owner'}}"
+          class="admin-btn generate {{!item.canGenerateWinners || generatingMap[item.id] ? 'disabled' : ''}}"
+          data-id="{{item.id}}"
+          data-can-generate="{{item.canGenerateWinners}}"
+          bindtap="generateWinners"
+        >
+          {{generatingMap[item.id] ? '生成中' : '生成获奖记录'}}
+        </view>
       </view>
     </view>
   </view>

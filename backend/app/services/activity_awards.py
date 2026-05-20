@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.models.models import (
     Activity,
+    ActivityPrize,
     ActivityParticipant,
     CheckinPost,
     Period,
@@ -59,7 +60,7 @@ def parse_rank_range(value: str | None) -> tuple[int, int] | None:
     numbers = [int(item) for item in re.findall(r"\d+", text)]
     if not numbers:
         return None
-    if "前" in text:
+    if "前" in text or "鍓" in text:
         return 1, numbers[0]
     if len(numbers) >= 2:
         return numbers[0], numbers[1]
@@ -79,11 +80,15 @@ def find_prize_for_config(db: Session, item: dict, index: int) -> Prize:
     if prize_id:
         prize = db.query(Prize).filter(Prize.id == prize_id).first()
         if prize:
+            if not prize.image_url and (item.get("image_url") or item.get("image")):
+                prize.image_url = item.get("image_url") or item.get("image")
             return prize
 
     name = str(item.get("name") or f"活动奖品{index + 1}").strip()
     prize = db.query(Prize).filter(Prize.name == name).order_by(Prize.id.asc()).first()
     if prize:
+        if not prize.image_url and (item.get("image_url") or item.get("image")):
+            prize.image_url = item.get("image_url") or item.get("image")
         return prize
 
     quantity = to_int(item.get("quantity"), 0) or 0
@@ -102,8 +107,54 @@ def find_prize_for_config(db: Session, item: dict, index: int) -> Prize:
     return prize
 
 
+def serialize_activity_prize_row(row: ActivityPrize, prize: Prize, index: int) -> dict:
+    image = prize.image_url or DEFAULT_PRIZE_IMAGE
+    rank = row.rank_label or f"奖品{index + 1}"
+    item = {
+        "id": f"ap{row.id}",
+        "prize_id": prize.id,
+        "rank": rank,
+        "rank_label": rank,
+        "name": prize.name,
+        "image": image,
+        "image_url": image,
+        "prize_type": prize.prize_type.value if hasattr(prize.prize_type, "value") else str(prize.prize_type),
+        "sort_order": row.sort_order,
+    }
+    if row.quantity is not None:
+        item["quantity"] = row.quantity
+    if row.rank_start is not None:
+        item["rank_start"] = row.rank_start
+    if row.rank_end is not None:
+        item["rank_end"] = row.rank_end
+    return item
+
+
+def sync_legacy_prizes_json(activity: Activity, normalized: list[dict]) -> None:
+    value = dumps(normalized)
+    if activity.prizes_json != value:
+        activity.prizes_json = value
+
+
 def ensure_activity_prize_mappings(db: Session, activity: Activity, persist: bool = False) -> list[dict]:
     Prize.__table__.create(bind=db.get_bind(), checkfirst=True)
+    ActivityPrize.__table__.create(bind=db.get_bind(), checkfirst=True)
+    table_rows = db.query(ActivityPrize, Prize).join(
+        Prize, ActivityPrize.prize_id == Prize.id
+    ).filter(
+        ActivityPrize.activity_id == activity.id
+    ).order_by(ActivityPrize.sort_order.asc(), ActivityPrize.id.asc()).all()
+    if table_rows:
+        normalized = [
+            serialize_activity_prize_row(row.ActivityPrize, row.Prize, index)
+            for index, row in enumerate(table_rows)
+        ]
+        sync_legacy_prizes_json(activity, normalized)
+        db.flush()
+        if persist:
+            db.commit()
+        return normalized
+
     prizes = loads(activity.prizes_json, [])
     if not isinstance(prizes, list):
         prizes = []
@@ -132,15 +183,25 @@ def ensure_activity_prize_mappings(db: Session, activity: Activity, persist: boo
         }
         if quantity is not None:
             mapped["quantity"] = quantity
+        rank_range = parse_rank_range(rank)
+        db.add(ActivityPrize(
+            activity_id=activity.id,
+            prize_id=prize.id,
+            rank_label=rank,
+            rank_start=rank_range[0] if rank_range else None,
+            rank_end=rank_range[1] if rank_range else None,
+            quantity=quantity,
+            sort_order=index + 1,
+        ))
         normalized.append(mapped)
         if mapped != raw_item:
             changed = True
 
-    if changed:
-        activity.prizes_json = dumps(normalized)
-        db.flush()
-        if persist:
-            db.commit()
+    if normalized or changed:
+        sync_legacy_prizes_json(activity, normalized)
+    db.flush()
+    if persist:
+        db.commit()
     return normalized
 
 

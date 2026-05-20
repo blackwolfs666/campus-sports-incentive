@@ -138,12 +138,16 @@ class ActivityPrizeItem(BaseModel):
     id: str
     prize_id: Optional[int] = None
     rank: str
+    rank_label: Optional[str] = None
+    rank_start: Optional[int] = None
+    rank_end: Optional[int] = None
     name: str
     icon: Optional[str] = None
     image: Optional[str] = None
     image_url: Optional[str] = None
     prize_type: Optional[str] = None
     quantity: Optional[int] = None
+    sort_order: Optional[int] = None
 
 
 class ActivityResponse(BaseModel):
@@ -263,6 +267,7 @@ class AdminActivityItem(BaseModel):
     myAdminRole: str
     canManageAdmins: bool = False
     canEdit: bool = True
+    canGenerateWinners: bool = False
     createdBy: Optional[int] = None
 
 
