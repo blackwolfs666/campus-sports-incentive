@@ -1,6 +1,7 @@
 <view class="page" wx:if="{{activity}}">
   <view class="scroll-area">
-    <view class="hero {{activity.coverTone}}">
+    <view class="hero {{activity.coverTone}} {{activity.posterUrl ? 'with-poster' : ''}}">
+      <image wx:if="{{activity.posterUrl}}" class="hero-poster" src="{{activity.posterUrl}}" mode="aspectFill"></image>
       <view class="hero-shade"></view>
       <view class="hero-fade"></view>
       <view class="hero-actions">

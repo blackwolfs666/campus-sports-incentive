@@ -16,8 +16,6 @@ from app.schemas.schemas import (
 
 router = APIRouter(prefix="/auth", tags=["认证"])
 
-# 开发模式下的测试用户ID
-DEV_USER_ID = 7
 _user_cas_columns_ready = False
 
 
@@ -45,16 +43,6 @@ def get_current_user_sync(
 ) -> User:
     """同步版本的用户认证依赖"""
     ensure_user_cas_columns()
-    # 开发模式：如果没有token，返回测试用户
-    if settings.DEBUG and not authorization:
-        user = db.query(User).filter(User.id == DEV_USER_ID).first()
-        if user:
-            return user
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="开发模式下请先运行插入模拟数据脚本"
-        )
-    
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -93,12 +81,11 @@ def get_current_user_sync(
 
 async def get_wechat_session_key(code: str) -> dict:
     """通过微信code获取openid和session_key"""
-    if settings.DEBUG and (not settings.WECHAT_APPID or not settings.WECHAT_SECRET):
-        return {
-            "openid": settings.DEV_WECHAT_OPENID,
-            "session_key": "dev_session_key",
-            "unionid": None
-        }
+    if not settings.WECHAT_APPID or not settings.WECHAT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="微信登录配置缺失"
+        )
 
     url = "https://api.weixin.qq.com/sns/jscode2session"
     params = {

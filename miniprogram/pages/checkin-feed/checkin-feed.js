@@ -1,5 +1,3 @@
-const { getActivityById } = require('../../data/mock-activities')
-
 function formatDateTime(value) {
   if (!value) return ''
   const date = new Date(value)
@@ -31,7 +29,6 @@ Page({
 
   onLoad(options) {
     const activityId = options.activityId || options.id || ''
-    const activity = getActivityById(activityId)
 
     if (!activityId) {
       wx.showToast({ title: '活动不存在', icon: 'none' })
@@ -40,9 +37,9 @@ Page({
     }
 
     this.setData({
-      activity,
+      activity: null,
       activityId,
-      isEnded: activity?.status === 'ended'
+      isEnded: false
     })
     this.fetchActivity()
     this.fetchPosts()
@@ -68,11 +65,9 @@ Page({
         isEnded: false
       })
     }).catch((err) => {
-      console.warn('获取活动状态失败，使用本地活动配置', err)
-      if (!this.data.activity || !this.data.activity.isRegistered) {
-        wx.showToast({ title: '报名后才能查看打卡动态', icon: 'none' })
-        setTimeout(() => wx.navigateBack(), 600)
-      }
+      console.error('获取活动状态失败', err)
+      wx.showToast({ title: '获取活动失败', icon: 'none' })
+      setTimeout(() => wx.navigateBack(), 600)
     })
   },
 

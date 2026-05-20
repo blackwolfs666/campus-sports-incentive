@@ -333,6 +333,7 @@ class ActivityPrize(Base):
     rank_start = Column(Integer, nullable=True, comment="起始名次")
     rank_end = Column(Integer, nullable=True, comment="结束名次")
     quantity = Column(Integer, nullable=True, comment="奖品数量")
+    image_url = Column(String(500), nullable=True, comment="活动奖品展示图片")
     sort_order = Column(Integer, nullable=False, default=0, comment="排序")
     created_at = Column(DateTime, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), comment="更新时间")

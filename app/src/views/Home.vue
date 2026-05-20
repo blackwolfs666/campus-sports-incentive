@@ -151,14 +151,6 @@ const homeData = ref({
 
 const loading = ref(false)
 
-const getTodayRecordDate = () => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
 const fetchHomeData = async () => {
   try {
     const res = await stepsApi.getHome()
@@ -171,12 +163,25 @@ const fetchHomeData = async () => {
 const syncSteps = async () => {
   loading.value = true
   try {
-    // 模拟从微信获取步数
-    const mockSteps = Math.floor(Math.random() * 15000) + 5000
+    if (!window.wx?.login || !window.wx?.getWeRunData) {
+      throw new Error('当前环境无法获取微信运动数据')
+    }
+    const code = await new Promise((resolve, reject) => {
+      window.wx.login({
+        success: (res) => res.code ? resolve(res.code) : reject(new Error('微信登录失败')),
+        fail: reject
+      })
+    })
+    const runData = await new Promise((resolve, reject) => {
+      window.wx.getWeRunData({
+        success: resolve,
+        fail: reject
+      })
+    })
     await stepsApi.sync({
-      steps: mockSteps,
-      distance: Number((mockSteps * 0.0007).toFixed(2)),
-      record_date: getTodayRecordDate()
+      code,
+      encryptedData: runData.encryptedData,
+      iv: runData.iv
     })
     await fetchHomeData()
   } catch (e) {

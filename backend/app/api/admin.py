@@ -83,6 +83,11 @@ def ensure_admin_tables() -> None:
             conn.execute(text("ALTER TABLE activities MODIFY start_date DATETIME NOT NULL"))
             conn.execute(text("ALTER TABLE activities MODIFY end_date DATETIME NOT NULL"))
 
+    activity_prize_columns = {item["name"] for item in inspector.get_columns("activity_prizes")}
+    if "image_url" not in activity_prize_columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE activity_prizes ADD COLUMN image_url VARCHAR(500) NULL COMMENT '活动奖品展示图片'"))
+
     _tables_ready = True
 
 
@@ -102,6 +107,13 @@ def loads(raw, fallback):
 
 def dumps(value) -> str:
     return json.dumps(value, ensure_ascii=False)
+
+
+def normalize_stored_image_url(value: str | None) -> str:
+    text_value = str(value or "").strip()
+    marker = "/static/uploads/"
+    index = text_value.find(marker)
+    return text_value[index:] if index >= 0 else text_value
 
 
 def format_user_code(user_id: int) -> str:
@@ -355,7 +367,7 @@ def serialize_prizes(prizes: list[dict]) -> list[dict]:
             "id": prize.get("id") or f"p{index + 1}",
             "rank": prize.get("rank") or f"奖品{index + 1}",
             "name": name,
-            "image": prize.get("image") or "/images/prizes/medal.svg",
+            "image": normalize_stored_image_url(prize.get("image")) or "/images/prizes/medal.svg",
             "quantity": prize.get("quantity"),
         }
         if prize.get("prize_id") is not None:
@@ -404,7 +416,7 @@ def apply_payload(activity: Activity, payload, include_dates: bool) -> None:
     if payload.description is not None:
         activity.description = payload.description.strip()
     if payload.posterUrl is not None:
-        activity.poster_url = payload.posterUrl.strip()
+        activity.poster_url = normalize_stored_image_url(payload.posterUrl)
     if payload.scopeText is not None:
         activity.scope_text = payload.scopeText.strip()
         activity.target_group = payload.scopeText.strip() or "全体学生"
@@ -669,7 +681,7 @@ async def update_activity(activity_id: str, payload: AdminActivityUpdate, db: Se
     if payload.description is not None:
         activity.description = payload.description.strip()
     if payload.posterUrl is not None:
-        activity.poster_url = payload.posterUrl.strip()
+        activity.poster_url = normalize_stored_image_url(payload.posterUrl)
     if max_participants_touched:
         activity.max_participants = payload.maxParticipants or 0
     if payload.checkinPostVisible is not None:

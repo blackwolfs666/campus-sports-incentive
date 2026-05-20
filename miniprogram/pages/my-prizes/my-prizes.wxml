@@ -35,13 +35,15 @@
           <text class="time">{{item.award_type || '步数奖励'}} · {{item.statusText}}</text>
         </view>
 
-        <button
-          wx:if="{{item.viewStatus !== 'expired'}}"
-          class="action"
-          data-id="{{item.id}}"
-          bindtap="goToRedeem"
-        >{{item.actionText}}</button>
-        <button wx:else class="outline-action">已过期</button>
+        <view class="card-side">
+          <view
+            wx:if="{{item.viewStatus !== 'expired'}}"
+            class="action"
+            data-id="{{item.id}}"
+            bindtap="goToRedeem"
+          >{{item.actionText}}</view>
+          <view wx:else class="outline-action">已过期</view>
+        </view>
       </view>
     </view>
 

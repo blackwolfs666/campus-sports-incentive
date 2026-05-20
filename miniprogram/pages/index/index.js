@@ -1,5 +1,3 @@
-const { activities } = require('../../data/mock-activities')
-
 const DAY_LABELS = ['日', '一', '二', '三', '四', '五', '六']
 const SYNC_DATE_KEY = 'lastStepSyncDate'
 const STEP_HISTORY_KEY = 'stepHistoryMap'
@@ -61,13 +59,9 @@ Page({
 
   onLoad() {
     const systemInfo = wx.getSystemInfoSync()
-    const joinedActivities = activities.filter(item => item.isRegistered && item.status === 'active')
     const stepHistoryMap = wx.getStorageSync(STEP_HISTORY_KEY) || {}
     this.setData({
       statusBarHeight: systemInfo.statusBarHeight || 20,
-      joinedActivities,
-      joinedActivityCount: joinedActivities.length,
-      activeActivity: joinedActivities[0] || null,
       stepHistoryMap,
       calendarCells: this.buildCalendarCells(0, 10000, stepHistoryMap)
     })
@@ -97,12 +91,12 @@ Page({
         activeActivity: joinedActivities[activeActivityIndex] || null
       })
     }).catch((err) => {
-      console.warn('获取我参与的活动失败，使用本地活动配置', err)
-      const joinedActivities = activities.filter(item => item.isRegistered && item.status === 'active')
+      console.error('获取我参与的活动失败', err)
       this.setData({
-        joinedActivities,
-        joinedActivityCount: joinedActivities.length,
-        activeActivity: joinedActivities[this.data.activeActivityIndex || 0] || joinedActivities[0] || null
+        joinedActivities: [],
+        joinedActivityCount: 0,
+        activeActivityIndex: 0,
+        activeActivity: null
       })
     })
   },
@@ -228,11 +222,6 @@ Page({
 
     if (this.data.isSyncing) return
 
-    if (app.globalData.devMode) {
-      wx.showToast({ title: '当前为模拟数据模式', icon: 'none' })
-      return
-    }
-
     wx.getSetting({
       success: (res) => {
         if (res.authSetting['scope.werun'] === true) {
@@ -327,6 +316,7 @@ Page({
               this.markSyncedToday()
               this.finishSync()
               wx.showToast({ title: `同步成功 ${syncRes.steps} 步`, icon: 'success' })
+              this.fetchJoinedActivities()
               this.fetchHomeData()
             }).catch(err => {
               this.finishSync()
@@ -387,6 +377,7 @@ Page({
       this.goToActivities()
       return
     }
+    getApp().globalData.currentActivity = activity
     wx.navigateTo({
       url: `/pages/activity-detail/activity-detail?id=${activity.id}`
     })

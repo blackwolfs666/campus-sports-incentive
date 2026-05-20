@@ -4,7 +4,7 @@ import re
 from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import func
+from sqlalchemy import func, inspect, text
 from sqlalchemy.orm import Session
 
 from app.models.models import (
@@ -26,6 +26,16 @@ from app.models.models import (
 
 PRIZE_TYPES = [PrizeType.first, PrizeType.second, PrizeType.third, PrizeType.honorable]
 DEFAULT_PRIZE_IMAGE = "/images/prizes/medal.svg"
+
+
+def ensure_activity_prizes_table(db: Session) -> None:
+    Prize.__table__.create(bind=db.get_bind(), checkfirst=True)
+    ActivityPrize.__table__.create(bind=db.get_bind(), checkfirst=True)
+    inspector = inspect(db.get_bind())
+    columns = {item["name"] for item in inspector.get_columns("activity_prizes")}
+    if "image_url" not in columns:
+        db.execute(text("ALTER TABLE activity_prizes ADD COLUMN image_url VARCHAR(500) NULL COMMENT '活动奖品展示图片'"))
+        db.flush()
 
 
 def dumps(value: Any) -> str:
@@ -55,6 +65,13 @@ def to_int(value, fallback: int | None = None) -> int | None:
         return fallback
 
 
+def normalize_stored_image_url(value: str | None) -> str:
+    text_value = str(value or "").strip()
+    marker = "/static/uploads/"
+    index = text_value.find(marker)
+    return text_value[index:] if index >= 0 else text_value
+
+
 def parse_rank_range(value: str | None) -> tuple[int, int] | None:
     text = str(value or "")
     numbers = [int(item) for item in re.findall(r"\d+", text)]
@@ -81,21 +98,21 @@ def find_prize_for_config(db: Session, item: dict, index: int) -> Prize:
         prize = db.query(Prize).filter(Prize.id == prize_id).first()
         if prize:
             if not prize.image_url and (item.get("image_url") or item.get("image")):
-                prize.image_url = item.get("image_url") or item.get("image")
+                prize.image_url = normalize_stored_image_url(item.get("image_url") or item.get("image"))
             return prize
 
     name = str(item.get("name") or f"活动奖品{index + 1}").strip()
     prize = db.query(Prize).filter(Prize.name == name).order_by(Prize.id.asc()).first()
     if prize:
         if not prize.image_url and (item.get("image_url") or item.get("image")):
-            prize.image_url = item.get("image_url") or item.get("image")
+            prize.image_url = normalize_stored_image_url(item.get("image_url") or item.get("image"))
         return prize
 
     quantity = to_int(item.get("quantity"), 0) or 0
     prize = Prize(
         name=name,
         description=str(item.get("rank") or "活动奖品"),
-        image_url=item.get("image_url") or item.get("image") or DEFAULT_PRIZE_IMAGE,
+        image_url=normalize_stored_image_url(item.get("image_url") or item.get("image")) or DEFAULT_PRIZE_IMAGE,
         prize_type=prize_type_for_index(index),
         stock=quantity,
         points=0,
@@ -108,7 +125,7 @@ def find_prize_for_config(db: Session, item: dict, index: int) -> Prize:
 
 
 def serialize_activity_prize_row(row: ActivityPrize, prize: Prize, index: int) -> dict:
-    image = prize.image_url or DEFAULT_PRIZE_IMAGE
+    image = row.image_url or prize.image_url or DEFAULT_PRIZE_IMAGE
     rank = row.rank_label or f"奖品{index + 1}"
     item = {
         "id": f"ap{row.id}",
@@ -137,8 +154,7 @@ def sync_legacy_prizes_json(activity: Activity, normalized: list[dict]) -> None:
 
 
 def ensure_activity_prize_mappings(db: Session, activity: Activity, persist: bool = False) -> list[dict]:
-    Prize.__table__.create(bind=db.get_bind(), checkfirst=True)
-    ActivityPrize.__table__.create(bind=db.get_bind(), checkfirst=True)
+    ensure_activity_prizes_table(db)
     table_rows = db.query(ActivityPrize, Prize).join(
         Prize, ActivityPrize.prize_id == Prize.id
     ).filter(
@@ -165,7 +181,7 @@ def ensure_activity_prize_mappings(db: Session, activity: Activity, persist: boo
         item = dict(raw_item) if isinstance(raw_item, dict) else {}
         prize = find_prize_for_config(db, item, index)
         rank = item.get("rank") or f"奖品{index + 1}"
-        image = item.get("image") or item.get("image_url") or prize.image_url or DEFAULT_PRIZE_IMAGE
+        image = normalize_stored_image_url(item.get("image") or item.get("image_url") or prize.image_url) or DEFAULT_PRIZE_IMAGE
         quantity = to_int(item.get("quantity"))
         if quantity is None:
             rank_range = parse_rank_range(rank)
@@ -191,6 +207,7 @@ def ensure_activity_prize_mappings(db: Session, activity: Activity, persist: boo
             rank_start=rank_range[0] if rank_range else None,
             rank_end=rank_range[1] if rank_range else None,
             quantity=quantity,
+            image_url=image,
             sort_order=index + 1,
         ))
         normalized.append(mapped)

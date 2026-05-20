@@ -43,17 +43,12 @@ const loading = ref(false)
 const handleLogin = async () => {
   loading.value = true
   try {
-    // 模拟微信登录 - 实际项目中需要调用微信SDK获取code
-    // wx.login({
-    //   success: async (res) => {
-    //     await userStore.login(res.code)
-    //     router.push('/')
-    //   }
-    // })
-    
-    // 开发环境模拟登录
-    const mockCode = 'mock_wx_code_' + Date.now()
-    await userStore.login(mockCode)
+    const code = new URLSearchParams(window.location.search).get('code')
+    if (!code) {
+      alert('请通过微信授权入口打开登录页')
+      return
+    }
+    await userStore.login(code)
     router.push('/')
   } catch (e) {
     console.error('登录失败', e)

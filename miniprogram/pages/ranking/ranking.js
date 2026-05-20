@@ -1,5 +1,3 @@
-const { getActivityById } = require('../../data/mock-activities')
-
 Page({
   data: {
     rankType: 'points',
@@ -9,7 +7,7 @@ Page({
     ruleHint: '按累计积分排名',
     topThree: [],
     leaderboard: [],
-    myRank: 12,
+    myRank: null,
     myValue: 0,
     myValueLabel: '积分',
     userInfo: null
@@ -17,11 +15,10 @@ Page({
 
   onLoad(options = {}) {
     const activityId = options.activityId || options.id || ''
-    const activity = activityId ? getActivityById(activityId) : null
     this.setData({
       activityId,
-      activity,
-      pageTitle: activity ? `${activity.name}：排行榜` : '排行榜',
+      activity: null,
+      pageTitle: '排行榜',
       ruleHint: this.getRuleHint(activityId, this.data.rankType)
     })
     this.fetchActivity()
@@ -44,7 +41,7 @@ Page({
         pageTitle: `${activity.name}：排行榜`
       })
     }).catch((err) => {
-      console.warn('获取排行榜活动信息失败，使用本地标题', err)
+      console.error('获取排行榜活动信息失败', err)
     })
   },
 
@@ -109,10 +106,10 @@ Page({
       this.setData({
         topThree: allItems.slice(0, 3),
         leaderboard: allItems.slice(3),
-        myRank: res.my_rank?.rank || 12,
+        myRank: res.my_rank?.rank || null,
         myValue,
         myValueLabel: this.data.rankType === 'points' ? '积分' : '步',
-        userInfo: app.globalData.userInfo || { name: '新用户' }
+        userInfo: app.globalData.userInfo || null
       })
     }).catch(err => {
       console.error('获取排行榜失败', err)

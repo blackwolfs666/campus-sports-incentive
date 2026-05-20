@@ -1,4 +1,3 @@
-const { getActivityById } = require('../../data/mock-activities')
 const { BASE_URL, API_BASE_URL } = require('../../config/api')
 
 Page({
@@ -14,7 +13,6 @@ Page({
 
   onLoad(options) {
     const activityId = options.activityId || options.id || ''
-    const activity = getActivityById(activityId)
 
     if (!activityId) {
       wx.showToast({ title: '活动不存在', icon: 'none' })
@@ -23,7 +21,7 @@ Page({
     }
 
     this.setData({
-      activity,
+      activity: null,
       activityId,
       steps: Number(options.steps || 0),
       streakDays: Number(options.streakDays || 0)
@@ -52,11 +50,9 @@ Page({
       }
       this.setData({ activity })
     }).catch((err) => {
-      console.warn('获取活动状态失败，使用本地活动配置', err)
-      if (!this.data.activity || !this.data.activity.isRegistered) {
-        wx.showToast({ title: '报名后才能发布打卡动态', icon: 'none' })
-        setTimeout(() => wx.navigateBack(), 600)
-      }
+      console.error('获取活动状态失败', err)
+      wx.showToast({ title: '获取活动失败', icon: 'none' })
+      setTimeout(() => wx.navigateBack(), 600)
     })
   },
 

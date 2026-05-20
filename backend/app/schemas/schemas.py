@@ -156,6 +156,7 @@ class ActivityResponse(BaseModel):
     status: str
     statusText: str
     coverTone: str
+    posterUrl: str = ""
     startDate: str
     endDate: str
     signupStart: str

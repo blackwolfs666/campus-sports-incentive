@@ -82,8 +82,8 @@
 .prize-card {
   display: flex;
   align-items: center;
-  gap: 18rpx;
-  padding: 28rpx;
+  gap: 16rpx;
+  padding: 28rpx 24rpx;
   border-radius: 32rpx;
   background: #ffffff;
   box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.05);
@@ -132,11 +132,14 @@
   gap: 10rpx;
   margin-bottom: 6rpx;
   min-width: 0;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .name {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 100%;
   color: #111827;
   font-size: 28rpx;
   line-height: 1.25;
@@ -144,6 +147,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.card-side {
+  width: 124rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .status-pill {
@@ -185,12 +196,12 @@
 .action,
 .outline-action {
   flex-shrink: 0;
-  width: 148rpx;
+  width: 124rpx;
   min-width: 0;
   height: 64rpx;
   padding: 0;
   border-radius: 22rpx;
-  font-size: 24rpx;
+  font-size: 23rpx;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -206,13 +217,10 @@
 }
 
 .outline-action {
-  background: #ffffff;
+  background: #f3f4f6;
   color: #6b7280;
-  border: 1rpx solid #e5e7eb;
 }
 
-.action::after,
-.outline-action::after,
 .empty button::after {
   border: 0;
 }

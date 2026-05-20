@@ -1,5 +1,3 @@
-const { getActivityById } = require('../../data/mock-activities')
-
 const SYNC_DATE_KEY = 'lastStepSyncDate'
 const PRIZE_PLACEHOLDERS = [
   '/images/prizes/thermos.svg',
@@ -13,6 +11,16 @@ const PRIZE_TYPE_IMAGES = {
   second: '/images/prizes/stationery.svg',
   third: '/images/prizes/coffee-card.svg',
   honorable: '/images/prizes/medal.svg'
+}
+
+function normalizeRemoteUrl(url) {
+  if (!url) return ''
+  if (/^https?:\/\//.test(url)) return url
+  if (url.startsWith('/static/')) {
+    const { BASE_URL } = require('../../config/api')
+    return `${BASE_URL}${url}`
+  }
+  return url
 }
 
 function getTodayKey() {
@@ -32,7 +40,7 @@ function isTodayDateTime(value) {
 function normalizePrize(prize, index) {
   return {
     ...prize,
-    image: prize.image_url || prize.image || PRIZE_TYPE_IMAGES[prize.prize_type] || PRIZE_PLACEHOLDERS[index % PRIZE_PLACEHOLDERS.length]
+    image: normalizeRemoteUrl(prize.image_url || prize.image) || PRIZE_TYPE_IMAGES[prize.prize_type] || PRIZE_PLACEHOLDERS[index % PRIZE_PLACEHOLDERS.length]
   }
 }
 
@@ -40,6 +48,7 @@ function normalizeActivity(activity) {
   if (!activity) return null
   return {
     ...activity,
+    posterUrl: normalizeRemoteUrl(activity.posterUrl || activity.poster_url),
     prizes: (activity.prizes || []).map(normalizePrize)
   }
 }
@@ -52,9 +61,17 @@ Page({
   },
 
   onLoad(options) {
-    const activity = normalizeActivity(getActivityById(options.id))
+    const activityId = options.id || ''
+    if (!activityId) {
+      wx.showToast({ title: '活动不存在', icon: 'none' })
+      setTimeout(() => wx.navigateBack(), 600)
+      return
+    }
+
+    const currentActivity = getApp().globalData.currentActivity
+    const activity = currentActivity?.id === activityId ? normalizeActivity(currentActivity) : null
     this.setData({ activity })
-    this.fetchActivity(options.id || activity?.id)
+    this.fetchActivity(activityId)
     this.refreshSyncState()
     this.fetchSyncStateFromHome()
   },
@@ -62,6 +79,9 @@ Page({
   onShow() {
     this.refreshSyncState()
     this.fetchSyncStateFromHome()
+    if (this.data.activity?.id) {
+      this.fetchActivity(this.data.activity.id)
+    }
   },
 
   refreshSyncState() {
@@ -91,9 +111,12 @@ Page({
     app.request({
       url: `/activities/${id}`
     }).then((res) => {
-      this.setData({ activity: normalizeActivity(res) })
+      const activity = normalizeActivity(res)
+      getApp().globalData.currentActivity = activity
+      this.setData({ activity })
     }).catch((err) => {
-      console.warn('获取活动详情失败，使用本地活动配置', err)
+      console.error('获取活动详情失败', err)
+      wx.showToast({ title: '获取活动失败', icon: 'none' })
     })
   },
 
@@ -117,7 +140,9 @@ Page({
       url: `/activities/${this.data.activity.id}/join`,
       method: 'POST'
     }).then((res) => {
-      this.setData({ activity: normalizeActivity(res.activity) })
+      const activity = normalizeActivity(res.activity)
+      getApp().globalData.currentActivity = activity
+      this.setData({ activity })
       wx.showToast({
         title: '报名成功',
         icon: 'success'
@@ -141,11 +166,6 @@ Page({
     }
 
     if (this.data.isSyncing) return
-
-    if (app.globalData.devMode) {
-      wx.showToast({ title: '当前为模拟数据模式', icon: 'none' })
-      return
-    }
 
     wx.getSetting({
       success: (res) => {
@@ -240,6 +260,9 @@ Page({
             }).then((syncRes) => {
               this.markSyncedToday()
               this.finishSync()
+              if (this.data.activity?.id) {
+                this.fetchActivity(this.data.activity.id)
+              }
               this.promptPublishCheckin(syncRes)
             }).catch((err) => {
               this.finishSync()

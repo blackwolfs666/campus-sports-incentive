@@ -142,7 +142,7 @@
   font-weight: 800;
 }
 
-.mock-note {
+.filter-note {
   margin: 0 0 16rpx;
   color: #9a6b00;
   font-size: 23rpx;
@@ -182,6 +182,13 @@
 
 .cover.gray {
   background: linear-gradient(135deg, #374151, #9ca3af);
+}
+
+.cover-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .cover-shade {

@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS activity_prizes (
   rank_start INT NULL COMMENT '起始名次',
   rank_end INT NULL COMMENT '结束名次',
   quantity INT NULL COMMENT '奖品数量',
+  image_url VARCHAR(500) NULL COMMENT '活动奖品展示图片',
   sort_order INT NOT NULL DEFAULT 0 COMMENT '排序',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -41,3 +42,6 @@ CREATE TABLE IF NOT EXISTS activity_prizes (
   CONSTRAINT fk_activity_prizes_activity FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE,
   CONSTRAINT fk_activity_prizes_prize FOREIGN KEY (prize_id) REFERENCES prizes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE activity_prizes
+  ADD COLUMN IF NOT EXISTS image_url VARCHAR(500) NULL COMMENT '活动奖品展示图片';

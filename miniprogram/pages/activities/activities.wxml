@@ -27,11 +27,12 @@
       </view>
     </view>
 
-    <view class="mock-note">{{joinFilter === 'joined' ? '这里只展示你已经报名的活动。' : joinFilter === 'notJoined' ? '这里只展示你尚未报名的活动。' : '活动列表来自后端接口，报名状态会实时保存。'}}</view>
+    <view class="filter-note">{{joinFilter === 'joined' ? '这里只展示你已经报名的活动。' : joinFilter === 'notJoined' ? '这里只展示你尚未报名的活动。' : '活动列表来自后端接口，报名状态会实时保存。'}}</view>
 
     <view wx:if="{{filteredActivities.length}}" class="activity-list">
       <view class="activity-card" wx:for="{{filteredActivities}}" wx:key="id" data-id="{{item.id}}" bindtap="goDetail">
         <view class="cover {{item.coverTone}}">
+          <image wx:if="{{item.posterUrl}}" class="cover-poster" src="{{item.posterUrl}}" mode="aspectFill"></image>
           <view class="cover-shade"></view>
           <view class="status-badge {{item.status}}">
             <view class="status-dot"></view>

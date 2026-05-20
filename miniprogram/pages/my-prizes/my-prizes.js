@@ -1,5 +1,5 @@
 const STATUS_TEXT = {
-  pending: '待生成',
+  pending: '待核销',
   claimed: '待核销',
   redeemed: '已领取',
   expired: '已过期'
@@ -17,17 +17,15 @@ function normalizePrize(item) {
 
   if (item.status === 'claimed' && isExpired(item)) {
     viewStatus = 'expired'
-  }
-
-  if (item.status === 'pending' || item.status === 'claimed') {
+  } else if (item.status === 'pending' || item.status === 'claimed') {
     viewStatus = 'pending'
   }
 
   return {
     ...item,
     viewStatus,
-    statusText: STATUS_TEXT[item.status] || STATUS_TEXT[viewStatus] || item.status || '未知状态',
-    actionText: item.status === 'pending' ? '生成兑换码' : '查看凭证'
+    statusText: STATUS_TEXT[viewStatus] || STATUS_TEXT[item.status] || item.status || '未知状态',
+    actionText: '查看凭证'
   }
 }
 

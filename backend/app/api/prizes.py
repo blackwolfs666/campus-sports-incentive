@@ -261,6 +261,16 @@ def generate_claim_qrcode(claim_code: str) -> str:
     return f"/static/uploads/qrcodes/{filename}"
 
 
+def local_qrcode_missing(url: str | None) -> bool:
+    if not url:
+        return True
+    prefix = "/static/uploads/qrcodes/"
+    if not url.startswith(prefix):
+        return False
+    filename = Path(url).name
+    return not (QRCODE_DIR / filename).exists()
+
+
 @router.get("", response_model=list[PrizeResponse])
 async def get_prizes(
     is_active: bool = True,
@@ -562,7 +572,7 @@ async def get_winner_detail(
     if not winner:
         raise HTTPException(status_code=404, detail="获奖记录不存在")
 
-    if winner.status == WinnerStatus.claimed and winner.claim_code and not winner.claim_qrcode:
+    if winner.status in {WinnerStatus.claimed, WinnerStatus.redeemed} and winner.claim_code and local_qrcode_missing(winner.claim_qrcode):
         winner.claim_qrcode = generate_claim_qrcode(winner.claim_code)
         db.commit()
         db.refresh(winner)

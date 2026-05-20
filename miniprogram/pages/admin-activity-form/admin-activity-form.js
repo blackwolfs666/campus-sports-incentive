@@ -144,6 +144,19 @@ function normalizeImageUrl(url) {
   return `${BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
 }
 
+function toStorageImageUrl(url) {
+  if (!url) return ''
+  const text = String(url).trim()
+  const staticIndex = text.indexOf('/static/uploads/')
+  if (staticIndex >= 0) {
+    return text.slice(staticIndex)
+  }
+  if (text.startsWith(BASE_URL)) {
+    return text.slice(BASE_URL.length) || '/'
+  }
+  return text
+}
+
 function splitScopeText(scopeText) {
   return String(scopeText || '')
     .split(/[、,，/／\s]+/)
@@ -331,7 +344,7 @@ Page({
         ...clone(emptyForm),
         name: activity.name || '',
         description: activity.description || '',
-        posterUrl: activity.posterUrl || '',
+        posterUrl: normalizeImageUrl(activity.posterUrl || ''),
         registerStartTime: normalizeDateTime(activity.registerStartTime),
         registerEndTime: normalizeDateTime(activity.registerEndTime),
         activityStartTime: normalizeDateTime(activity.activityStartTime),
@@ -340,7 +353,10 @@ Page({
         maxParticipants: activity.maxParticipants || '',
         scoreRule: normalizeScoreRules(activity.scoreRule),
         awardRules: normalizeAwardRules(activity.awardRules),
-        prizes: (activity.prizes || []).length ? activity.prizes.map(normalizePrize) : [{ name: '', quantity: '', image: '' }]
+        prizes: (activity.prizes || []).length ? activity.prizes.map(normalizePrize).map(item => ({
+          ...item,
+          image: normalizeImageUrl(item.image)
+        })) : [{ name: '', quantity: '', image: '' }]
       }
       const readonly = this.data.readonly || !activity.canEdit
       const canEditBasic = !readonly && activity.status !== 'ended'
@@ -780,7 +796,7 @@ Page({
     const payload = {
       name: form.name.trim(),
       description: form.description.trim(),
-      posterUrl: form.posterUrl.trim(),
+      posterUrl: toStorageImageUrl(form.posterUrl),
       maxParticipants: this.data.enableMaxParticipants ? toNumberOrNull(form.maxParticipants) : null
     }
 
@@ -809,7 +825,7 @@ Page({
           .map(item => ({
             name: (item.name || '').trim(),
             quantity: toNumberOrNull(item.quantity),
-            image: (item.image || '').trim()
+            image: toStorageImageUrl(item.image)
           }))
           .filter(item => item.name)
       })

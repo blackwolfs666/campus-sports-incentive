@@ -1,4 +1,11 @@
-const { activities } = require('../../data/mock-activities')
+const { BASE_URL } = require('../../config/api')
+
+function normalizeRemoteUrl(url) {
+  if (!url) return ''
+  if (/^https?:\/\//.test(url)) return url
+  if (url.startsWith('/static/')) return `${BASE_URL}${url}`
+  return url
+}
 
 Page({
   data: {
@@ -10,8 +17,6 @@ Page({
   },
 
   onLoad() {
-    this.setData({ activities })
-    this.applyFilters()
     this.fetchActivities()
   },
 
@@ -36,8 +41,9 @@ Page({
       this.setData({ activities: res.items || [] })
       this.applyFilters()
     }).catch((err) => {
-      console.warn('获取活动列表失败，使用本地活动配置', err)
-      this.setData({ activities })
+      console.error('获取活动列表失败', err)
+      wx.showToast({ title: '获取活动失败', icon: 'none' })
+      this.setData({ activities: [] })
       this.applyFilters()
     })
   },
@@ -77,6 +83,7 @@ Page({
       return matchStatus && matchJoin && matchKeyword
     }).map(item => ({
       ...item,
+      posterUrl: normalizeRemoteUrl(item.posterUrl || item.poster_url),
       displayName: this.truncateTitle(item.name)
     }))
 
@@ -98,6 +105,12 @@ Page({
 
   goDetail(e) {
     const id = e.currentTarget.dataset.id
+    if (!id) {
+      wx.showToast({ title: '活动不存在', icon: 'none' })
+      return
+    }
+    const activity = this.data.activities.find(item => item.id === id) || null
+    getApp().globalData.currentActivity = activity
     wx.navigateTo({
       url: `/pages/activity-detail/activity-detail?id=${id}`
     })
