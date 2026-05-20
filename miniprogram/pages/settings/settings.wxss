@@ -1,0 +1,178 @@
+.page {
+  min-height: 100vh;
+  background: #f0fdf4;
+  color: #111827;
+}
+
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(88rpx + env(safe-area-inset-top)) 32rpx 18rpx;
+  background: #f0fdf4;
+}
+
+.icon-btn,
+.header-spacer {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+}
+
+.icon-btn image {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.header-title {
+  color: #111827;
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.content {
+  padding: 24rpx 32rpx 90rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.profile-card,
+.section-card {
+  background: #ffffff;
+  border-radius: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.05);
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  padding: 30rpx 32rpx;
+}
+
+.avatar {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+  border: 4rpx solid #ffffff;
+  box-shadow: 0 6rpx 18rpx rgba(15, 23, 42, 0.12);
+  flex-shrink: 0;
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name,
+.meta {
+  display: block;
+}
+
+.name {
+  color: #111827;
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.meta {
+  margin-top: 5rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-card {
+  padding: 30rpx 32rpx;
+}
+
+.section-title {
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 900;
+  margin-bottom: 12rpx;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  min-height: 92rpx;
+  padding: 18rpx 0;
+}
+
+.setting-row + .setting-row,
+.help-item + .help-item {
+  border-top: 1rpx solid #f3f4f6;
+}
+
+.setting-row.plain {
+  align-items: flex-start;
+}
+
+.setting-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.setting-copy text,
+.help-item text {
+  display: block;
+}
+
+.setting-copy text:first-child,
+.help-item text:first-child {
+  color: #374151;
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.setting-copy text:last-child,
+.help-item text:last-child {
+  margin-top: 5rpx;
+  color: #9ca3af;
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+.chevron {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.status-pill {
+  flex-shrink: 0;
+  min-width: 104rpx;
+  height: 48rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.status-pill.ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-pill.warn {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.help-item {
+  padding: 18rpx 0;
+}

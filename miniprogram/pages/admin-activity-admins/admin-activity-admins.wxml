@@ -1,0 +1,40 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">活动管理员</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="content">
+    <view class="notice">
+      <text>{{activityStatus === 'ended' ? '活动已结束，只能查看管理员列表。' : canManage ? '你是根管理员，可以新增和移除普通管理员。' : '你是普通管理员，只能查看管理员列表。'}}</text>
+    </view>
+
+    <view wx:if="{{canManage && activityStatus !== 'ended'}}" class="search-card">
+      <view class="search-row">
+        <input value="{{searchUserId}}" bindinput="onSearchInput" placeholder="输入用户ID，如 U0000001" />
+        <view class="admin-btn" bindtap="searchUser">搜索</view>
+      </view>
+      <view wx:if="{{candidate}}" class="candidate">
+        <view>
+          <text>{{candidate.name}}</text>
+          <text>ID：{{candidate.displayUserId}} · {{candidate.departmentName || '未设置部门'}}</text>
+        </view>
+        <view class="admin-btn confirm" bindtap="confirmAdd">确认添加</view>
+      </view>
+    </view>
+
+    <view class="admin-card" wx:for="{{admins}}" wx:key="id">
+      <image class="avatar" src="{{item.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <view class="admin-main">
+        <text class="name">{{item.name}}</text>
+        <text class="meta">ID：{{item.displayUserId}} · {{item.departmentName || '未设置部门'}}</text>
+        <text class="role {{item.role}}">{{item.roleText}}</text>
+      </view>
+      <view wx:if="{{canManage && activityStatus !== 'ended' && !item.isOwner}}" class="admin-btn remove" data-user-id="{{item.userId}}" bindtap="removeAdmin">移出</view>
+      <view wx:elif="{{item.isOwner}}" class="admin-btn disabled">不可移除</view>
+    </view>
+  </view>
+</view>

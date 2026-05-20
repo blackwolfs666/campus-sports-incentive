@@ -1,0 +1,149 @@
+.page {
+  min-height: 100vh;
+  background: #f0fdf4;
+  color: #111827;
+}
+
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(88rpx + env(safe-area-inset-top)) 32rpx 18rpx;
+  background: #f0fdf4;
+}
+
+.icon-btn,
+.header-spacer {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+}
+
+.icon-btn image {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.header-title {
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.content {
+  padding: 24rpx 32rpx 80rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.status-card,
+.form-card {
+  background: #ffffff;
+  border-radius: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.05);
+}
+
+.status-card {
+  padding: 34rpx;
+  border: 2rpx solid #bbf7d0;
+}
+
+.status-icon {
+  width: 74rpx;
+  height: 74rpx;
+  border-radius: 24rpx;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18rpx;
+}
+
+.status-icon image {
+  width: 38rpx;
+  height: 38rpx;
+}
+
+.status-title,
+.status-line {
+  display: block;
+}
+
+.status-title {
+  color: #15803d;
+  font-size: 30rpx;
+  font-weight: 900;
+  margin-bottom: 12rpx;
+}
+
+.status-line {
+  color: #4b5563;
+  font-size: 24rpx;
+  line-height: 1.8;
+}
+
+.form-card {
+  padding: 34rpx;
+}
+
+.section-title,
+.section-desc {
+  display: block;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.section-desc {
+  margin-top: 8rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.field {
+  margin-top: 28rpx;
+}
+
+.field text {
+  display: block;
+  color: #374151;
+  font-size: 24rpx;
+  font-weight: 800;
+  margin-bottom: 12rpx;
+}
+
+.field input {
+  height: 84rpx;
+  border-radius: 20rpx;
+  background: #f9fafb;
+  padding: 0 24rpx;
+  color: #111827;
+  font-size: 26rpx;
+  box-sizing: border-box;
+}
+
+.submit-btn {
+  margin-top: 34rpx;
+  width: 100%;
+  height: 84rpx;
+  border-radius: 24rpx;
+  background: #15803d;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.submit-btn::after {
+  border: 0;
+}

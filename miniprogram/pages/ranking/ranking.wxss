@@ -1,0 +1,341 @@
+.page {
+  min-height: 100vh;
+  background: #f0fdf4;
+  color: #111827;
+  padding-bottom: 180rpx;
+  box-sizing: border-box;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(88rpx + env(safe-area-inset-top)) 32rpx 16rpx;
+  background: #f0fdf4;
+}
+
+.icon-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn image {
+  width: 42rpx;
+  height: 42rpx;
+}
+
+.header-title {
+  color: #15803d;
+  font-size: 34rpx;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+  padding: 0 20rpx;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-spacer {
+  width: 72rpx;
+  height: 72rpx;
+}
+
+.content {
+  padding: 0 32rpx 24rpx;
+}
+
+.segmented {
+  display: flex;
+  padding: 8rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.05);
+}
+
+.segment {
+  flex: 1;
+  min-height: 68rpx;
+  line-height: 68rpx;
+  border-radius: 18rpx;
+  color: #6b7280;
+  font-size: 23rpx;
+  text-align: center;
+}
+
+.segment.active {
+  background: #15803d;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.rule-hint {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin: 20rpx 0;
+  color: #9ca3af;
+  font-size: 23rpx;
+}
+
+.rule-hint image {
+  width: 26rpx;
+  height: 26rpx;
+  opacity: 0.55;
+}
+
+.podium-card,
+.rank-list {
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.05);
+}
+
+.podium-card {
+  padding: 48rpx 28rpx 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 20rpx;
+}
+
+.podium-person {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.crown {
+  color: #f59e0b;
+  font-size: 40rpx;
+  line-height: 1;
+  margin-bottom: 6rpx;
+}
+
+.avatar-wrap {
+  position: relative;
+}
+
+.avatar-wrap image {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.second .avatar-wrap image,
+.third .avatar-wrap image {
+  width: 112rpx;
+  height: 112rpx;
+  border: 8rpx solid #d1d5db;
+}
+
+.first .avatar-wrap image {
+  width: 144rpx;
+  height: 144rpx;
+  border: 8rpx solid #fbbf24;
+}
+
+.avatar-wrap text {
+  position: absolute;
+  left: 50%;
+  bottom: -12rpx;
+  transform: translateX(-50%);
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 22rpx;
+  text-align: center;
+  font-weight: 800;
+}
+
+.gold text {
+  background: #f59e0b;
+}
+
+.silver text {
+  background: #9ca3af;
+}
+
+.bronze text {
+  background: #b45309;
+}
+
+.person-name,
+.person-steps,
+.winner-steps {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-name {
+  margin-top: 24rpx;
+  color: #374151;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.champion {
+  color: #111827;
+  font-size: 28rpx;
+}
+
+.person-steps {
+  margin-top: 4rpx;
+  color: #6b7280;
+  font-size: 22rpx;
+}
+
+.winner-steps {
+  margin-top: 8rpx;
+  padding: 5rpx 14rpx;
+  border-radius: 999rpx;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.base {
+  width: 100%;
+  margin-top: 16rpx;
+  border-radius: 16rpx 16rpx 0 0;
+}
+
+.silver-base {
+  height: 104rpx;
+  background: #f3f4f6;
+}
+
+.gold-base {
+  height: 152rpx;
+  background: #fef3c7;
+}
+
+.bronze-base {
+  height: 72rpx;
+  background: #fff7ed;
+}
+
+.rank-list {
+  overflow: hidden;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx 32rpx;
+}
+
+.rank-row + .rank-row {
+  border-top: 1rpx solid #f3f4f6;
+}
+
+.rank-num {
+  width: 48rpx;
+  color: #9ca3af;
+  font-size: 27rpx;
+  text-align: center;
+  font-weight: 700;
+}
+
+.rank-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #dcfce7;
+}
+
+.rank-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-name,
+.rank-dept {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-name {
+  color: #374151;
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.rank-dept {
+  margin-top: 4rpx;
+  color: #9ca3af;
+  font-size: 22rpx;
+}
+
+.rank-steps {
+  color: #15803d;
+  font-size: 26rpx;
+  font-weight: 800;
+}
+
+.my-rank-card {
+  position: fixed;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 32rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx 32rpx;
+  border-radius: 32rpx;
+  background: #15803d;
+  box-shadow: 0 10rpx 26rpx rgba(21, 128, 61, 0.22);
+}
+
+.my-avatar image {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.my-info {
+  flex: 1;
+}
+
+.my-info text {
+  display: block;
+}
+
+.my-info text:first-child {
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.my-info text:last-child {
+  margin-top: 4rpx;
+  color: #bbf7d0;
+  font-size: 23rpx;
+}
+
+.my-rank-card > image {
+  width: 42rpx;
+  height: 42rpx;
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
+}

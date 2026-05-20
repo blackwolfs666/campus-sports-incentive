@@ -1,0 +1,267 @@
+.page {
+  min-height: 100vh;
+  background: #f0fdf4;
+  color: #111827;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(88rpx + env(safe-area-inset-top)) 32rpx 16rpx;
+  background: #f0fdf4;
+}
+
+.icon-btn,
+.header-spacer {
+  width: 72rpx;
+  height: 72rpx;
+}
+
+.icon-btn {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn image {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.header-title {
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 700;
+  max-width: 480rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content {
+  padding: 0 32rpx 56rpx;
+}
+
+.filters {
+  margin-top: 10rpx;
+  padding: 8rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8rpx;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.04);
+}
+
+.filter {
+  height: 72rpx;
+  border-radius: 24rpx;
+  color: #6b7280;
+  font-size: 27rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter.active {
+  background: #15803d;
+  color: #ffffff;
+}
+
+.list {
+  margin-top: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.empty {
+  min-height: 360rpx;
+  border-radius: 32rpx;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28rpx;
+  color: #6b7280;
+  font-size: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.04);
+}
+
+.empty button {
+  width: 260rpx;
+  height: 76rpx;
+  border-radius: 26rpx;
+  background: #15803d;
+  color: #ffffff;
+  font-size: 27rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.empty button::after {
+  border: 0;
+}
+
+.ended-tip {
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+
+.post-card {
+  border-radius: 32rpx;
+  background: #ffffff;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.05);
+}
+
+.post-head {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.avatar {
+  width: 78rpx;
+  height: 78rpx;
+  border-radius: 50%;
+  background: #dcfce7;
+  flex-shrink: 0;
+}
+
+.user-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.name {
+  color: #111827;
+  font-size: 29rpx;
+  font-weight: 800;
+  max-width: 360rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mine {
+  padding: 3rpx 12rpx;
+  border-radius: 999rpx;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.meta {
+  display: block;
+  margin-top: 6rpx;
+  color: #9ca3af;
+  font-size: 23rpx;
+}
+
+.content {
+  display: block;
+  margin-top: 24rpx;
+  color: #374151;
+  font-size: 29rpx;
+  line-height: 1.6;
+}
+
+.image-grid {
+  margin-top: 22rpx;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10rpx;
+}
+
+.image-grid.count-1 {
+  grid-template-columns: 360rpx;
+}
+
+.feed-image {
+  width: 100%;
+  height: 180rpx;
+  border-radius: 18rpx;
+  background: #f3f4f6;
+}
+
+.image-grid.count-1 .feed-image {
+  height: 360rpx;
+}
+
+.stats {
+  margin-top: 24rpx;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.stats view {
+  border-radius: 22rpx;
+  background: #f0fdf4;
+  padding: 18rpx;
+}
+
+.stats text {
+  display: block;
+}
+
+.stats text:first-child {
+  color: #15803d;
+  font-size: 22rpx;
+}
+
+.stats text:last-child {
+  margin-top: 6rpx;
+  color: #166534;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.post-actions {
+  margin-top: 24rpx;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.cheer {
+  width: 190rpx;
+  height: 68rpx;
+  padding: 0 24rpx;
+  margin: 0 0 0 auto;
+  border-radius: 999rpx;
+  background: #ffffff;
+  color: #15803d;
+  border: 2rpx solid #86efac;
+  font-size: 24rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.cheer.cheered {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #15803d;
+}

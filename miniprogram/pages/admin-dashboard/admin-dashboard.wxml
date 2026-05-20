@@ -1,0 +1,93 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">管理后台</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="content">
+    <view class="hero">
+      <view>
+        <text class="hero-title">活动数据看板</text>
+        <text class="hero-subtitle">查看你创建或参与管理的活动运营情况</text>
+      </view>
+      <view class="hero-actions">
+        <view class="action-btn" bindtap="goCreate">新建活动</view>
+        <view class="action-btn outline" bindtap="goList">活动列表</view>
+        <view class="action-btn outline" bindtap="goRedeem">核销奖品</view>
+      </view>
+    </view>
+
+    <view class="summary-grid">
+      <view class="summary-card">
+        <text>{{summary.totalActivities || 0}}</text>
+        <text>已发布活动</text>
+      </view>
+      <view class="summary-card">
+        <text>{{summary.activeActivities || 0}}</text>
+        <text>进行中活动</text>
+      </view>
+      <view class="summary-card">
+        <text>{{summary.totalParticipants || 0}}</text>
+        <text>累计报名人数</text>
+      </view>
+      <view class="summary-card">
+        <text>{{summary.totalCheckins || 0}}</text>
+        <text>累计打卡次数</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">
+        <image src="/images/icons/leaderboard.svg" mode="aspectFit"></image>
+        <text>活动状态分布</text>
+      </view>
+      <view class="status-list">
+        <view class="status-row" wx:for="{{statusDistribution}}" wx:key="status">
+          <text>{{item.label}}</text>
+          <view class="bar">
+            <view class="bar-fill" style="width: {{item.percent}}%;"></view>
+          </view>
+          <text>{{item.count}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">
+        <image src="/images/icons/trending_up.svg" mode="aspectFit"></image>
+        <text>近 7 日打卡趋势</text>
+      </view>
+      <view class="trend-wrap">
+        <view class="average-line" style="top: {{checkinAverageTop}}rpx;">
+          <view></view>
+          <text>平均 {{checkinAverage}}</text>
+        </view>
+        <view class="trend">
+        <view class="trend-item" wx:for="{{checkinTrend}}" wx:key="date">
+          <text class="trend-value">{{item.count}}</text>
+          <view class="trend-bar" style="height: {{item.height}}rpx;"></view>
+          <text class="trend-date">{{item.shortDate}}</text>
+        </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">
+        <image src="/images/icons/flag.svg" mode="aspectFit"></image>
+        <text>参与度 Top 5</text>
+      </view>
+      <view wx:if="{{topActivities.length === 0}}" class="empty">暂无可管理活动</view>
+      <view class="top-item" wx:for="{{topActivities}}" wx:key="activityId" data-id="{{item.activityId}}" bindtap="goEdit">
+        <view>
+          <text class="top-title">{{item.title}}</text>
+          <text class="top-meta">{{item.statusText}} · {{item.currentParticipants}} / {{item.maxParticipants || '不限'}}</text>
+        </view>
+        <image src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,66 @@
+<view class="page">
+  <main class="main-content">
+    <!-- Prize Hero Section -->
+    <section class="prize-hero">
+      <view class="prize-hero-card">
+        <!-- Decorative background elements -->
+        <view class="hero-bg-1"></view>
+        <view class="hero-bg-2"></view>
+        
+        <!-- Prize Image -->
+        <view class="prize-image-wrapper">
+          <view class="prize-image-glow"></view>
+          <image class="prize-image" src="{{prize.image || '/images/default-prize.png'}}" mode="aspectFill"></image>
+          <view class="prize-badge">
+            <image class="prize-badge-icon" src="/images/icons/emoji_events.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+        
+        <!-- Prize Info -->
+        <view class="prize-info">
+          <view class="prize-tag">{{prize.rank_name || '第一名奖励'}}</view>
+          <text class="prize-title">{{prize.name}}</text>
+          <text class="prize-desc">恭喜本阶段健步达标的各位优秀教师</text>
+        </view>
+      </view>
+    </section>
+
+    <!-- Winners List Section -->
+    <section class="winners-section">
+      <view class="section-header">
+        <text class="section-title">获奖老师名单</text>
+        <view class="section-count">共 {{winners.length}} 位</view>
+      </view>
+
+      <view class="winners-list">
+        <view class="winner-item" wx:for="{{winners}}" wx:key="id">
+          <view class="winner-left">
+            <image class="winner-avatar" src="{{item.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+            <view class="winner-info">
+              <text class="winner-name">{{item.name}}</text>
+              <text class="winner-dept">{{item.department}}</text>
+            </view>
+          </view>
+          <view class="winner-right">
+            <text class="winner-steps">{{item.total_steps}}</text>
+            <text class="winner-steps-label">累计步数</text>
+          </view>
+        </view>
+      </view>
+    </section>
+
+    <!-- How to Claim Section -->
+    <section class="claim-section">
+      <view class="claim-icon-wrapper">
+        <image class="claim-icon" src="/images/icons/info.svg" mode="aspectFit"></image>
+      </view>
+      <view class="claim-content">
+        <text class="claim-title">如何领取</text>
+        <text class="claim-desc">请获奖老师持本人校园卡，于本周五 17:00 前往 <text class="highlight">校工会 302 办公室</text> 领取。逾期将自动转入下一期奖池。</text>
+      </view>
+    </section>
+  </main>
+
+  <!-- Bottom TabBar -->
+  <tabbar selected="{{2}}"></tabbar>
+</view>

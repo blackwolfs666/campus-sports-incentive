@@ -1,0 +1,150 @@
+<view class="page" wx:if="{{activity}}">
+  <view class="scroll-area">
+    <view class="hero {{activity.coverTone}}">
+      <view class="hero-shade"></view>
+      <view class="hero-fade"></view>
+      <view class="hero-actions">
+        <view class="circle-btn" bindtap="goBack">
+          <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+        </view>
+        <view class="hero-action-spacer"></view>
+      </view>
+    </view>
+
+    <view class="content">
+      <view class="title-card">
+        <view class="tags">
+          <text wx:for="{{activity.tags}}" wx:key="*this">{{item}}</text>
+        </view>
+        <text class="title">{{activity.name}}</text>
+        <text class="intro">{{activity.description}}</text>
+
+        <view class="info-list">
+          <view class="info-line">
+            <view class="info-icon">
+              <image src="/images/icons/flag.svg" mode="aspectFit"></image>
+            </view>
+            <view>
+              <text class="info-label">报名时间</text>
+              <text class="info-value">{{activity.signupStart}} - {{activity.signupEnd}}</text>
+            </view>
+          </view>
+          <view class="info-line">
+            <view class="info-icon">
+              <image src="/images/icons/school.svg" mode="aspectFit"></image>
+            </view>
+            <view>
+              <text class="info-label">面向对象</text>
+              <text class="info-value">{{activity.targetGroup}}</text>
+            </view>
+          </view>
+          <view class="info-line">
+            <view class="info-icon">
+              <image src="/images/icons/person.svg" mode="aspectFit"></image>
+            </view>
+            <view>
+              <text class="info-label">参与人数</text>
+              <text class="info-value">{{activity.participants}} / {{activity.maxParticipants}} 人</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{activity.isRegistered && activity.status === 'active'}}" class="card">
+        <view class="section-title">
+          <image src="/images/icons/emoji_events.svg" mode="aspectFit"></image>
+          <text>活动排行榜</text>
+        </view>
+
+        <view class="detail-stats">
+          <view>
+            <text class="tiny green">总步数</text>
+            <text class="stat-value green">{{activity.totalSteps || 0}}</text>
+          </view>
+          <view>
+            <text class="tiny amber">总积分</text>
+            <text class="stat-value amber">{{activity.myPoints || 0}}</text>
+          </view>
+          <view>
+            <text class="tiny blue">积分排名</text>
+            <text class="stat-value blue">{{activity.myRank || '--'}}</text>
+          </view>
+        </view>
+
+        <view class="rank-banner">
+          <view>
+            <text>总积分排名</text>
+            <text>第 {{activity.myRank || '--'}} 名</text>
+          </view>
+          <image src="/images/icons/directions_run.svg" mode="aspectFit"></image>
+        </view>
+        <text class="rank-tip">继续加油，距离前1名 差 {{activity.topTenGap !== null && activity.topTenGap !== undefined ? activity.topTenGap : '--'}} 积分。</text>
+      </view>
+
+      <view wx:if="{{activity.isRegistered && activity.status === 'ended'}}" class="card ended-card">
+        <view class="ended-pill">活动已结束</view>
+        <text class="ended-label">我的最终排名</text>
+        <text class="ended-rank">第 {{activity.myFinalRank || '--'}} 名</text>
+        <view class="won-prize" wx:if="{{activity.hadPrize}}">
+          <image src="/images/icons/workspace_premium.svg" mode="aspectFit"></image>
+          <text>恭喜获得：{{activity.wonPrizeName}}</text>
+        </view>
+      </view>
+
+      <view class="card">
+        <view class="section-title">
+          <image src="/images/icons/flag.svg" mode="aspectFit"></image>
+          <text>活动规则</text>
+        </view>
+        <view class="rule-line" wx:for="{{activity.rules}}" wx:key="*this">
+          <text class="rule-num">{{index + 1}}</text>
+          <text>{{item}}</text>
+        </view>
+      </view>
+
+      <view class="card">
+        <view class="section-title">
+          <image src="/images/icons/workspace_premium.svg" mode="aspectFit"></image>
+          <text>活动奖品</text>
+        </view>
+        <scroll-view scroll-x class="prize-scroll" show-scrollbar="{{false}}">
+          <view class="prize-row">
+            <view class="prize-card {{index === 0 ? 'gold' : ''}}" wx:for="{{activity.prizes}}" wx:key="id">
+              <text class="prize-rank">{{item.rank}}</text>
+              <image class="prize-image" src="{{item.image}}" mode="aspectFit"></image>
+              <text class="prize-name">{{item.name}}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+    </view>
+  </view>
+
+  <view class="bottom-actions">
+    <button wx:if="{{!activity.isRegistered && activity.status === 'signup'}}" class="primary" bindtap="registerActivity">立即报名</button>
+
+    <view wx:elif="{{activity.isRegistered && activity.status === 'active'}}" class="action-stack">
+      <button class="primary" bindtap="goSyncSteps">{{isSyncing ? '正在同步...' : hasSyncedToday ? '再次同步步数' : '同步今日步数'}}</button>
+      <view class="quick-actions">
+        <button class="outline" bindtap="goRanking">排行榜</button>
+        <button class="outline" bindtap="goCheckinFeed">打卡动态</button>
+        <button class="outline" bindtap="goMyPrizes">我的奖品</button>
+      </view>
+    </view>
+
+    <view wx:elif="{{activity.isRegistered && activity.status === 'signup'}}" class="closed">已报名，活动开始后可同步步数</view>
+
+    <view wx:elif="{{activity.isRegistered && activity.status === 'ended'}}" class="quick-actions ended-actions">
+      <button class="primary" bindtap="goMyPrizes">我的奖品</button>
+    </view>
+
+    <view wx:elif="{{!activity.isRegistered && activity.status === 'active'}}" class="primary long-primary" bindtap="goSignupActivities">
+      <text class="long-primary-text">报名结束了，去看看其他活动吧</text>
+    </view>
+    <view wx:elif="{{!activity.isRegistered && activity.status === 'ended'}}" class="primary long-primary" bindtap="goSignupActivities">
+      <text class="long-primary-text">活动结束了，去看看其他活动吧</text>
+    </view>
+    <view wx:else class="closed">当前活动暂不可操作</view>
+  </view>
+</view>

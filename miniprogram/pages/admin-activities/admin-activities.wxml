@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">后台活动列表</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="content">
+    <view class="create-btn admin-btn" bindtap="goCreate">新建活动</view>
+
+    <view class="filter-tabs">
+      <view wx:for="{{statusFilters}}" wx:key="key" class="filter-tab {{statusFilter === item.key ? 'active' : ''}}" data-status="{{item.key}}" bindtap="changeStatusFilter">
+        {{item.label}}
+      </view>
+    </view>
+
+    <view wx:if="{{filteredActivities.length === 0}}" class="empty">
+      <image src="/images/icons/flag.svg" mode="aspectFit"></image>
+      <text>暂无可管理活动</text>
+      <view class="empty-btn admin-btn" bindtap="goCreate">立即新建</view>
+    </view>
+
+    <view class="activity-card" wx:for="{{filteredActivities}}" wx:key="id">
+      <view class="card-top">
+        <text class="status {{item.status}}">{{item.statusText}}</text>
+        <text class="role">{{item.myAdminRole === 'owner' ? '根管理员' : '普通管理员'}}</text>
+      </view>
+      <text class="title">{{item.name}}</text>
+      <text class="desc">{{item.description}}</text>
+      <view class="meta">
+        <text>报名：{{item.registerStartTime}} - {{item.registerEndTime}}</text>
+        <text>活动：{{item.activityStartTime}} - {{item.activityEndTime}}</text>
+        <text>人数：{{item.currentParticipants}} / {{item.maxParticipants || '不限'}}</text>
+      </view>
+      <view class="actions">
+        <view class="admin-btn {{!item.canEdit ? 'muted' : ''}}" data-id="{{item.id}}" data-can-edit="{{item.canEdit}}" bindtap="goEdit">{{item.canEdit ? '编辑' : '查看'}}</view>
+        <view class="admin-btn outline" data-id="{{item.id}}" bindtap="goAdmins">活动管理员</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,133 @@
+<view class="page">
+  <view class="page-header">
+    <view class="header-side"></view>
+    <text class="header-title">邮青步纪</text>
+    <view class="header-side right"></view>
+  </view>
+
+  <view class="content">
+    <view class="user-card">
+      <view class="avatar-box">
+        <image class="big-avatar" src="{{userInfo.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+        <view class="avatar-badge">
+          <image src="/images/icons/emoji_events.svg" mode="aspectFit"></image>
+        </view>
+      </view>
+      <view class="user-info">
+        <text class="user-name">{{userInfo.name || '新用户'}}</text>
+        <view class="user-meta">
+          <text class="user-id" bindtap="copyUserId">ID：{{displayUserId || '未生成'}}</text>
+          <text class="meta-separator">·</text>
+          <text class="college">{{userInfo.department_name || '未设置部门'}}</text>
+        </view>
+        <view class="badges">
+          <text>连续打卡{{streakDays}}天</text>
+          <text>运动达人</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="stats-grid">
+      <view class="stat-card">
+        <view class="stat-icon green">
+          <image src="/images/icons/directions_run.svg" mode="aspectFit"></image>
+        </view>
+        <text class="stat-num">{{todaySteps}}</text>
+        <text class="stat-label">今日步数</text>
+      </view>
+      <view class="stat-card">
+        <view class="stat-icon blue">
+          <image src="/images/icons/trending_up.svg" mode="aspectFit"></image>
+        </view>
+        <text class="stat-num">{{totalDistance}}</text>
+        <text class="stat-label">总里程(km)</text>
+      </view>
+      <view class="stat-card">
+        <view class="stat-icon amber">
+          <image src="/images/icons/history_edu.svg" mode="aspectFit"></image>
+        </view>
+        <text class="stat-num">{{streakDays}}</text>
+        <text class="stat-label">运动天数</text>
+      </view>
+    </view>
+
+    <view class="menu-card">
+      <view class="menu-item" bindtap="goAdminDashboard">
+        <view class="menu-icon green">
+          <image src="/images/icons/leaderboard.svg" mode="aspectFit"></image>
+        </view>
+        <view class="menu-copy">
+          <text>活动管理后台</text>
+          <text>发布活动、管理活动和活动管理员</text>
+        </view>
+        <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+
+      <view class="menu-item" bindtap="goToActivities">
+        <view class="menu-icon green">
+          <image src="/images/icons/flag.svg" mode="aspectFit"></image>
+        </view>
+        <view class="menu-copy">
+          <text>我的活动</text>
+          <text>查看已参与的活动</text>
+        </view>
+        <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+
+      <view class="menu-item" bindtap="goToMyPrizes">
+        <view class="menu-icon amber">
+          <image src="/images/icons/workspace_premium.svg" mode="aspectFit"></image>
+        </view>
+        <view class="menu-copy">
+          <text>我的奖品</text>
+          <text>查看和核销奖品</text>
+        </view>
+        <view class="badge" wx:if="{{pendingPrizeCount > 0}}">{{pendingPrizeCount}}</view>
+        <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+
+      <view class="menu-item" bindtap="goToNotifications">
+        <view class="menu-icon green">
+          <image src="/images/icons/notifications.svg" mode="aspectFit"></image>
+        </view>
+        <view class="menu-copy">
+          <text>我的消息</text>
+          <text>查看活动提醒和系统通知</text>
+        </view>
+        <view class="badge" wx:if="{{unreadMessageCount > 0}}">{{unreadMessageCount}}</view>
+        <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+
+      <view class="menu-item" bindtap="goCalendar">
+        <view class="menu-icon blue">
+          <image src="/images/icons/history_edu.svg" mode="aspectFit"></image>
+        </view>
+        <view class="menu-copy">
+          <text>我的打卡记录</text>
+          <text>查看运动历史</text>
+        </view>
+        <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+
+      <view class="menu-item" bindtap="goSettings">
+        <view class="menu-icon gray">
+          <image src="/images/icons/settings.svg" mode="aspectFit"></image>
+        </view>
+        <view class="menu-copy">
+          <text>设置与帮助</text>
+          <text>账号设置、隐私权限</text>
+        </view>
+        <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view class="logout-card" bindtap="logout">
+      <view class="menu-icon red">
+        <image src="/images/icons/person.svg" mode="aspectFit"></image>
+      </view>
+      <text>退出登录</text>
+      <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+    </view>
+
+  </view>
+</view>

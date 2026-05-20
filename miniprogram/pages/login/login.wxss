@@ -1,0 +1,68 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40rpx;
+  background-color: #f2f9ea;
+}
+
+.logo {
+  width: 160rpx;
+  height: 160rpx;
+  background-color: #9df197;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(23, 106, 33, 0.15);
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 800;
+  color: #176a21;
+  margin-bottom: 8rpx;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #575e52;
+  margin-bottom: 80rpx;
+}
+
+.login-btn {
+  width: 100%;
+  max-width: 500rpx;
+  min-height: 104rpx;
+  background-color: #176a21;
+  color: #d1ffc8;
+  border-radius: 9999rpx;
+  padding: 32rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 8rpx 24rpx rgba(23, 106, 33, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.login-btn::after {
+  border: 0;
+}
+
+.agreement {
+  font-size: 24rpx;
+  color: #575e52;
+  margin-top: 48rpx;
+  text-align: center;
+}
+
+.link {
+  color: #176a21;
+}

@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "获奖名单",
+  "navigationBarBackgroundColor": "#ebf3e3",
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "tabbar": "/components/tabbar/tabbar"
+  }
+}

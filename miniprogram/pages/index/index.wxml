@@ -1,0 +1,124 @@
+<view class="page">
+  <view class="page-header">
+    <view class="header-side" bindtap="goToProfile">
+      <image class="header-avatar" src="{{userInfo.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+    </view>
+    <text class="header-title">邮青步纪</text>
+    <view class="header-side right"></view>
+  </view>
+
+  <view class="content">
+    <view class="steps-card">
+      <view class="card-top">
+        <text class="muted">今日进度</text>
+        <view class="streak-pill">连续达标 {{streakDays}} 天</view>
+      </view>
+
+      <view class="steps-row">
+        <text class="steps-num">{{todayStepsText}}</text>
+        <text class="steps-goal">/ {{dailyGoalText}}</text>
+      </view>
+
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+        <view class="progress-thumb" style="left: {{progressPercent}}%;"></view>
+      </view>
+
+      <view class="progress-meta">
+        <text>0</text>
+        <text class="{{progressPercent >= 100 ? 'success' : ''}}">{{progressPercent >= 100 ? '已达标' : '还差 ' + remainingStepsText + ' 步'}}</text>
+        <text>{{dailyGoalText}}</text>
+      </view>
+    </view>
+
+    <view class="sync-button" bindtap="syncSteps">
+      <image src="/images/icons/cloud_sync.svg" mode="aspectFit"></image>
+      <view class="sync-copy">
+        <text class="sync-title">{{isSyncing ? '正在同步...' : '同步运动步数'}}</text>
+        <text class="sync-subtitle">{{lastSyncTime ? '上次同步 ' + lastSyncTime : '同步后可获得积分，参与活动排名'}}</text>
+      </view>
+    </view>
+
+    <view class="activity-card" wx:if="{{activeActivity}}" bindtap="goToActivityDetail">
+      <view class="activity-strip">
+        <view class="strip-left">
+          <image src="/images/icons/emoji_events.svg" mode="aspectFit"></image>
+          <text>我正在参与的活动</text>
+        </view>
+        <view class="activity-switch" catchtap="noop">
+          <view class="switch-btn" data-direction="prev" catchtap="switchActivity">‹</view>
+          <text>{{activeActivityIndex + 1}}/{{joinedActivityCount}}</text>
+          <view class="switch-btn" data-direction="next" catchtap="switchActivity">›</view>
+        </view>
+      </view>
+
+      <view class="activity-body">
+        <view class="activity-title-row">
+          <text class="activity-title">{{activeActivity.name}}</text>
+          <text class="activity-end">{{activeActivity.endDate}} 结束</text>
+        </view>
+
+        <view class="activity-stats">
+          <view class="activity-stat green">
+            <view class="stat-label-line">
+              <image src="/images/icons/directions_run.svg" mode="aspectFit"></image>
+              <text>总步数</text>
+            </view>
+            <text class="stat-main">{{activeActivity.totalSteps || todayStepsText}}</text>
+            <text class="stat-unit">步</text>
+          </view>
+          <view class="activity-stat amber">
+            <view class="stat-label-line">
+              <image src="/images/icons/bolt.svg" mode="aspectFit"></image>
+              <text>总积分</text>
+            </view>
+            <text class="stat-main">{{activeActivity.myPoints || 0}}</text>
+            <text class="stat-unit">分</text>
+          </view>
+        </view>
+
+        <view class="rank-row">
+          <view>
+            <text class="rank-label">积分排名</text>
+            <text class="rank-value">第 {{activeActivity.myRank || '--'}} 名</text>
+          </view>
+          <text class="rank-gap">距离前1名 差 {{activeActivity.topTenGap !== null && activeActivity.topTenGap !== undefined ? activeActivity.topTenGap : '--'}} 分</text>
+        </view>
+
+        <view class="action-row">
+          <button class="primary-mini" catchtap="goToActivityDetail">进入活动</button>
+          <button class="outline-mini" catchtap="goToRanking">查看排名</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-activity" wx:else>
+      <view class="empty-icon">
+        <image src="/images/icons/trending_up.svg" mode="aspectFit"></image>
+      </view>
+      <text class="empty-title">你还没有参与活动</text>
+      <text class="empty-text">去活动页报名，步数可换积分和奖品</text>
+      <button bindtap="goToActivities">去看看活动</button>
+    </view>
+
+    <view class="calendar-card">
+      <view class="section-head">
+        <text>运动记录</text>
+        <view class="streak-pill light">连续达标 {{streakDays}} 天</view>
+      </view>
+
+      <view class="week-row">
+        <text wx:for="{{dayLabels}}" wx:key="*this">{{item}}</text>
+      </view>
+
+      <view class="calendar-grid">
+        <view wx:for="{{calendarCells}}" wx:key="key" class="calendar-cell">
+          <view wx:if="{{!item.empty}}" class="day-dot {{item.isToday ? 'today' : ''}} {{item.hitTarget ? 'hit' : ''}} {{item.hasSteps && !item.hitTarget ? 'has' : ''}} {{item.isFuture ? 'future' : ''}}">
+            {{item.day}}
+          </view>
+          <text wx:if="{{!item.empty}}" class="steps-label {{item.hitTarget ? 'hit-text' : ''}} {{item.hasSteps && !item.hitTarget ? 'has-text' : ''}} {{item.missed ? 'missed-text' : ''}}">{{item.stepsLabel || '-'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

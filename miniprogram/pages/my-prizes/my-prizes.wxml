@@ -1,0 +1,57 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">我的奖品</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="content">
+    <view class="segmented">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="key"
+        class="segment {{activeTab === item.key ? 'active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="switchTab"
+      >{{item.text}}</view>
+    </view>
+
+    <text class="count-text" wx:if="{{filteredPrizes.length}}">共有 {{filteredPrizes.length}} 个奖品</text>
+
+    <view class="list" wx:if="{{filteredPrizes.length}}">
+      <view class="prize-card {{item.viewStatus === 'expired' ? 'muted' : ''}}" wx:for="{{filteredPrizes}}" wx:key="id">
+        <view class="icon-wrap {{item.viewStatus}}">
+          <image src="{{item.prize_type === 'second' ? '/images/icons/auto_stories.svg' : item.prize_type === 'third' ? '/images/icons/card_membership.svg' : '/images/icons/local_cafe.svg'}}" mode="aspectFit"></image>
+        </view>
+
+        <view class="info">
+          <view class="name-row">
+            <text class="name">{{item.prize_name}}</text>
+            <text class="status-pill {{item.viewStatus}}">{{item.statusText}}</text>
+          </view>
+          <text class="source">{{item.activity_name || item.period_name || '邮青步纪活动'}}</text>
+          <text class="time">{{item.award_type || '步数奖励'}} · {{item.statusText}}</text>
+        </view>
+
+        <button
+          wx:if="{{item.viewStatus !== 'expired'}}"
+          class="action"
+          data-id="{{item.id}}"
+          bindtap="goToRedeem"
+        >{{item.actionText}}</button>
+        <button wx:else class="outline-action">已过期</button>
+      </view>
+    </view>
+
+    <view class="empty" wx:else>
+      <view class="empty-icon">
+        <image src="/images/icons/emoji_events.svg" mode="aspectFit"></image>
+      </view>
+      <text class="empty-title">暂无奖品</text>
+      <text class="empty-desc">坚持运动就有机会获得奖励</text>
+      <button bindtap="goActivities">去参与活动</button>
+    </view>
+  </view>
+</view>

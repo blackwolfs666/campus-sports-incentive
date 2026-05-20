@@ -1,0 +1,280 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">{{isEdit ? '编辑活动' : '新建活动'}}</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <scroll-view scroll-y class="content">
+    <view wx:if="{{isEdit}}" class="status-card">
+      <text>{{statusText}}</text>
+      <text>{{readonly || !canEditBasic ? '当前账号只能查看活动信息' : '当前状态下不可编辑的字段已自动灰置'}}</text>
+    </view>
+
+    <view class="form-card">
+      <text class="section-title">基础信息</text>
+      <view class="field">
+        <view class="required-label"><text>活动名称</text><text>*</text></view>
+        <input value="{{form.name}}" data-field="name" bindinput="onInput" disabled="{{!canEditBasic}}" placeholder="请输入活动名称" />
+      </view>
+      <view class="field">
+        <view class="required-label"><text>活动描述</text><text>*</text></view>
+        <textarea value="{{form.description}}" data-field="description" bindinput="onInput" disabled="{{!canEditBasic}}" placeholder="请输入活动说明" maxlength="500"></textarea>
+      </view>
+
+      <view class="field">
+        <view class="label-row">
+          <text>活动海报</text>
+          <text class="field-tip">只能上传 1 张</text>
+        </view>
+        <view wx:if="{{form.posterUrl}}" class="poster-card">
+          <image class="poster-preview" src="{{form.posterUrl}}" mode="aspectFill" bindtap="previewPoster"></image>
+          <view class="poster-info">
+            <text class="poster-title">已上传活动海报</text>
+            <text class="poster-desc">点击图片可预览；继续上传会替换当前海报。</text>
+            <view wx:if="{{canEditBasic}}" class="poster-actions">
+              <view class="poster-action primary" bindtap="choosePoster">更换海报</view>
+              <view class="poster-action danger" bindtap="removePoster">删除</view>
+            </view>
+          </view>
+        </view>
+        <view wx:else class="poster-empty {{!canEditBasic ? 'disabled' : ''}}" bindtap="choosePoster">
+          <text class="poster-plus">+</text>
+          <text class="poster-upload-text">上传活动海报</text>
+          <text class="poster-upload-tip">仅支持 1 张图片，建议使用横版海报</text>
+        </view>
+      </view>
+
+      <view class="field">
+        <view class="label-row">
+          <text>活动范围</text>
+          <text class="field-tip">可多选部门，暂未接入 CAS</text>
+        </view>
+        <view class="scope-select {{!canEditFull ? 'disabled' : ''}}" bindtap="toggleDepartmentPicker">
+          <text class="{{form.scopeText ? 'scope-value' : 'scope-placeholder'}}">{{form.scopeText || '请选择部门，可多选'}}</text>
+          <text class="scope-arrow">{{showDepartmentPicker ? '收起' : '选择'}}</text>
+        </view>
+        <view wx:if="{{showDepartmentPicker}}" class="department-panel">
+          <view
+            wx:for="{{departments}}"
+            wx:key="id"
+            class="department-option {{item.selected ? 'selected' : ''}}"
+            data-index="{{index}}"
+            bindtap="toggleDepartment"
+          >
+            <text>{{item.name}}</text>
+            <text class="department-check">{{item.selected ? '已选' : ''}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-card">
+      <text class="section-title">时间设置</text>
+      <view wx:if="{{timeError}}" class="time-error">{{timeError}}</view>
+      <view class="field">
+        <view class="required-label"><text>报名开始时间</text><text>*</text></view>
+        <picker mode="date" value="{{dateTimeParts.registerStartTime.date}}" data-field="registerStartTime" bindchange="onDateChange" disabled="{{!canEditFull}}">
+          <view class="date-picker {{!canEditFull ? 'disabled' : ''}}">
+            <text class="{{form.registerStartTime ? 'date-value' : 'date-placeholder'}}">{{form.registerStartTime || '请选择报名开始日期'}}</text>
+            <text class="date-arrow">选择</text>
+          </view>
+        </picker>
+        <view class="time-picker-row {{!dateTimeParts.registerStartTime.date || !canEditFull ? 'disabled' : ''}}">
+          <picker range="{{hourOptions}}" value="{{dateTimeParts.registerStartTime.hourIndex}}" data-field="registerStartTime" data-part="hour" bindchange="onTimePartChange" disabled="{{!dateTimeParts.registerStartTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.registerStartTime.hour}} 时</view>
+          </picker>
+          <picker range="{{minuteOptions}}" value="{{dateTimeParts.registerStartTime.minuteIndex}}" data-field="registerStartTime" data-part="minute" bindchange="onTimePartChange" disabled="{{!dateTimeParts.registerStartTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.registerStartTime.minute}} 分</view>
+          </picker>
+          <picker range="{{secondOptions}}" value="{{dateTimeParts.registerStartTime.secondIndex}}" data-field="registerStartTime" data-part="second" bindchange="onTimePartChange" disabled="{{!dateTimeParts.registerStartTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.registerStartTime.second}} 秒</view>
+          </picker>
+        </view>
+      </view>
+      <view class="field">
+        <view class="required-label"><text>报名结束时间</text><text>*</text></view>
+        <picker mode="date" value="{{dateTimeParts.registerEndTime.date}}" data-field="registerEndTime" bindchange="onDateChange" disabled="{{!canEditFull}}">
+          <view class="date-picker {{!canEditFull ? 'disabled' : ''}}">
+            <text class="{{form.registerEndTime ? 'date-value' : 'date-placeholder'}}">{{form.registerEndTime || '请选择报名结束日期'}}</text>
+            <text class="date-arrow">选择</text>
+          </view>
+        </picker>
+        <view class="time-picker-row {{!dateTimeParts.registerEndTime.date || !canEditFull ? 'disabled' : ''}}">
+          <picker range="{{hourOptions}}" value="{{dateTimeParts.registerEndTime.hourIndex}}" data-field="registerEndTime" data-part="hour" bindchange="onTimePartChange" disabled="{{!dateTimeParts.registerEndTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.registerEndTime.hour}} 时</view>
+          </picker>
+          <picker range="{{minuteOptions}}" value="{{dateTimeParts.registerEndTime.minuteIndex}}" data-field="registerEndTime" data-part="minute" bindchange="onTimePartChange" disabled="{{!dateTimeParts.registerEndTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.registerEndTime.minute}} 分</view>
+          </picker>
+          <picker range="{{secondOptions}}" value="{{dateTimeParts.registerEndTime.secondIndex}}" data-field="registerEndTime" data-part="second" bindchange="onTimePartChange" disabled="{{!dateTimeParts.registerEndTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.registerEndTime.second}} 秒</view>
+          </picker>
+        </view>
+      </view>
+      <view class="field">
+        <view class="required-label"><text>活动开始时间</text><text>*</text></view>
+        <picker mode="date" value="{{dateTimeParts.activityStartTime.date}}" data-field="activityStartTime" bindchange="onDateChange" disabled="{{!canEditFull}}">
+          <view class="date-picker {{!canEditFull ? 'disabled' : ''}}">
+            <text class="{{form.activityStartTime ? 'date-value' : 'date-placeholder'}}">{{form.activityStartTime || '请选择活动开始日期'}}</text>
+            <text class="date-arrow">选择</text>
+          </view>
+        </picker>
+        <view class="time-picker-row {{!dateTimeParts.activityStartTime.date || !canEditFull ? 'disabled' : ''}}">
+          <picker range="{{hourOptions}}" value="{{dateTimeParts.activityStartTime.hourIndex}}" data-field="activityStartTime" data-part="hour" bindchange="onTimePartChange" disabled="{{!dateTimeParts.activityStartTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.activityStartTime.hour}} 时</view>
+          </picker>
+          <picker range="{{minuteOptions}}" value="{{dateTimeParts.activityStartTime.minuteIndex}}" data-field="activityStartTime" data-part="minute" bindchange="onTimePartChange" disabled="{{!dateTimeParts.activityStartTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.activityStartTime.minute}} 分</view>
+          </picker>
+          <picker range="{{secondOptions}}" value="{{dateTimeParts.activityStartTime.secondIndex}}" data-field="activityStartTime" data-part="second" bindchange="onTimePartChange" disabled="{{!dateTimeParts.activityStartTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.activityStartTime.second}} 秒</view>
+          </picker>
+        </view>
+      </view>
+      <view class="field">
+        <view class="required-label"><text>活动结束时间</text><text>*</text></view>
+        <picker mode="date" value="{{dateTimeParts.activityEndTime.date}}" data-field="activityEndTime" bindchange="onDateChange" disabled="{{!canEditFull}}">
+          <view class="date-picker {{!canEditFull ? 'disabled' : ''}}">
+            <text class="{{form.activityEndTime ? 'date-value' : 'date-placeholder'}}">{{form.activityEndTime || '请选择活动结束日期'}}</text>
+            <text class="date-arrow">选择</text>
+          </view>
+        </picker>
+        <view class="time-picker-row {{!dateTimeParts.activityEndTime.date || !canEditFull ? 'disabled' : ''}}">
+          <picker range="{{hourOptions}}" value="{{dateTimeParts.activityEndTime.hourIndex}}" data-field="activityEndTime" data-part="hour" bindchange="onTimePartChange" disabled="{{!dateTimeParts.activityEndTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.activityEndTime.hour}} 时</view>
+          </picker>
+          <picker range="{{minuteOptions}}" value="{{dateTimeParts.activityEndTime.minuteIndex}}" data-field="activityEndTime" data-part="minute" bindchange="onTimePartChange" disabled="{{!dateTimeParts.activityEndTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.activityEndTime.minute}} 分</view>
+          </picker>
+          <picker range="{{secondOptions}}" value="{{dateTimeParts.activityEndTime.secondIndex}}" data-field="activityEndTime" data-part="second" bindchange="onTimePartChange" disabled="{{!dateTimeParts.activityEndTime.date || !canEditFull}}">
+            <view class="time-cell">{{dateTimeParts.activityEndTime.second}} 秒</view>
+          </picker>
+        </view>
+      </view>
+      <view class="field">
+        <text>最大报名人数</text>
+        <view class="check-row {{!canEditMax ? 'disabled' : ''}}" bindtap="toggleMaxParticipants">
+          <view class="check-box {{enableMaxParticipants ? 'checked' : ''}}">{{enableMaxParticipants ? '✓' : ''}}</view>
+          <view class="check-texts">
+            <text>设置最大报名人数</text>
+            <text>{{enableMaxParticipants ? '已限制报名人数' : '不勾选表示不限人数'}}</text>
+          </view>
+        </view>
+        <view wx:if="{{enableMaxParticipants}}" class="number-stepper">
+          <view class="step-btn {{!canEditMax ? 'disabled' : ''}}" data-delta="-10" bindtap="stepMaxParticipants">-10</view>
+          <input class="step-input" type="number" inputmode="numeric" confirm-type="done" value="{{form.maxParticipants}}" data-field="maxParticipants" bindinput="onInput" disabled="{{!canEditMax}}" placeholder="请输入人数" />
+          <view class="step-btn {{!canEditMax ? 'disabled' : ''}}" data-delta="10" bindtap="stepMaxParticipants">+10</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="section-row">
+        <text class="section-title">积分规则</text>
+        <view class="form-btn tiny {{!canEditFull ? 'disabled' : ''}}" bindtap="addScoreRule">新增</view>
+      </view>
+      <view wx:if="{{form.scoreRule.length === 0}}" class="hint-empty">暂未配置积分规则，可按活动需要新增。</view>
+      <view class="score-rule-item" wx:for="{{form.scoreRule}}" wx:key="index">
+        <view class="field">
+          <text>规则种类</text>
+          <picker range="{{scoreRuleOptionLabels}}" value="{{item.optionIndex}}" data-index="{{index}}" bindchange="onScoreRuleTypeChange" disabled="{{!canEditFull}}">
+            <view class="rule-select {{!canEditFull ? 'disabled' : ''}}">
+              <text>{{item.label || '请选择规则种类'}}</text>
+              <text>选择</text>
+            </view>
+          </picker>
+          <text class="rule-desc">{{item.desc}}</text>
+        </view>
+        <view wx:if="{{item.type !== 'extra_step_score'}}" class="field">
+          <text>规则数值</text>
+          <input type="number" value="{{item.value}}" data-index="{{index}}" data-field="value" bindinput="onScoreRuleInput" disabled="{{!canEditFull}}" placeholder="请输入大于 0 的整数" />
+        </view>
+        <view wx:else class="grid-fields">
+          <view class="field">
+            <text>每多多少步</text>
+            <input type="number" value="{{item.stepUnit}}" data-index="{{index}}" data-field="stepUnit" bindinput="onScoreRuleInput" disabled="{{!canEditFull}}" placeholder="如 1000" />
+          </view>
+          <view class="field">
+            <text>增加积分</text>
+            <input type="number" value="{{item.score}}" data-index="{{index}}" data-field="score" bindinput="onScoreRuleInput" disabled="{{!canEditFull}}" placeholder="如 1" />
+          </view>
+        </view>
+        <view class="form-btn remove {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" bindtap="removeScoreRule">删除规则</view>
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="section-row">
+        <text class="section-title">获奖规则</text>
+        <view class="form-btn tiny {{!canEditFull ? 'disabled' : ''}}" bindtap="addAwardRule">新增</view>
+      </view>
+      <view wx:if="{{form.awardRules.length === 0}}" class="hint-empty">暂未配置获奖规则，可按活动需要新增。</view>
+      <view class="score-rule-item" wx:for="{{form.awardRules}}" wx:key="index">
+        <view class="field">
+          <text>规则种类</text>
+          <picker range="{{awardRuleOptionLabels}}" value="{{item.optionIndex}}" data-index="{{index}}" bindchange="onAwardRuleTypeChange" disabled="{{!canEditFull}}">
+            <view class="rule-select {{!canEditFull ? 'disabled' : ''}}">
+              <text>{{item.label || '请选择规则种类'}}</text>
+              <text>选择</text>
+            </view>
+          </picker>
+          <text class="rule-desc">{{item.desc}}</text>
+        </view>
+        <view wx:if="{{item.needValue}}" class="field">
+          <text>规则数值 X</text>
+          <input type="number" value="{{item.value}}" data-index="{{index}}" bindinput="onAwardRuleInput" disabled="{{!canEditFull}}" placeholder="请输入大于 0 的整数" />
+        </view>
+        <view class="form-btn remove {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" bindtap="removeAwardRule">删除规则</view>
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="section-row">
+        <text class="section-title">奖品信息</text>
+        <view class="form-btn tiny {{!canEditFull ? 'disabled' : ''}}" bindtap="addPrize">新增</view>
+      </view>
+      <view class="prize-item" wx:for="{{form.prizes}}" wx:key="index">
+        <view class="field">
+          <text>奖品名称</text>
+          <input value="{{item.name}}" data-index="{{index}}" data-field="name" bindinput="onPrizeInput" disabled="{{!canEditFull}}" placeholder="奖品名称" />
+        </view>
+        <view class="field">
+          <text>奖品数量</text>
+          <view class="number-stepper compact">
+            <view class="step-btn {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" data-delta="-1" bindtap="stepPrizeQuantity">-1</view>
+            <input class="step-input" type="number" inputmode="numeric" confirm-type="done" value="{{item.quantity}}" data-index="{{index}}" data-field="quantity" bindinput="onPrizeInput" disabled="{{!canEditFull}}" placeholder="数量" />
+            <view class="step-btn {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" data-delta="1" bindtap="stepPrizeQuantity">+1</view>
+          </view>
+        </view>
+        <view class="field">
+          <view class="label-row">
+            <text>奖品图片</text>
+            <text class="field-tip">只能上传 1 张</text>
+          </view>
+          <view wx:if="{{item.image}}" class="poster-card prize-image-card">
+            <image class="poster-preview prize-image-preview" src="{{item.image}}" mode="aspectFill" data-index="{{index}}" bindtap="previewPrizeImage"></image>
+            <view class="poster-info">
+              <text class="poster-title">已上传奖品图片</text>
+              <text class="poster-desc">点击图片可预览；继续上传会替换当前图片。</text>
+              <view wx:if="{{canEditFull}}" class="poster-actions">
+                <view class="poster-action primary" data-index="{{index}}" bindtap="choosePrizeImage">更换图片</view>
+                <view class="poster-action danger" data-index="{{index}}" bindtap="removePrizeImage">删除</view>
+              </view>
+            </view>
+          </view>
+          <view wx:else class="poster-empty prize-image-empty {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" bindtap="choosePrizeImage">
+            <text class="poster-plus">+</text>
+            <text class="poster-upload-text">上传奖品图片</text>
+            <text class="poster-upload-tip">仅支持 1 张图片</text>
+          </view>
+        </view>
+        <view class="form-btn remove {{!canEditFull || form.prizes.length <= 1 ? 'disabled' : ''}}" data-index="{{index}}" bindtap="removePrize">删除奖品</view>
+      </view>
+    </view>
+
+    <view wx:if="{{!readonly && (!isEdit || canEditBasic)}}" class="form-btn submit" bindtap="submitForm">{{isEdit ? '保存修改' : '确认发布'}}</view>
+  </scroll-view>
+</view>

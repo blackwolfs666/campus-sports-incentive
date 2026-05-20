@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "发布打卡动态",
+  "navigationBarBackgroundColor": "#f0fdf4",
+  "navigationBarTextStyle": "black",
+  "enablePullDownRefresh": false
+}

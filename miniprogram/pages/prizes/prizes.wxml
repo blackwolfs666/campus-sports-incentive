@@ -1,0 +1,91 @@
+<view class="page">
+  <main class="main-content">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <view class="hero-bg-icon">
+        <image class="eco-icon" src="/images/icons/eco.svg" mode="aspectFit"></image>
+      </view>
+      <text class="hero-title">本周奖励</text>
+      <text class="hero-subtitle">勤学进取，硕果累累</text>
+    </section>
+
+    <!-- Prize Cards List -->
+    <view class="prize-list">
+      <!-- Card 1: 1st Place -->
+      <view class="prize-card first" bindtap="goToPrizeDetail" data-id="{{prizes[0].id}}">
+        <view class="prize-icon-wrapper gold">
+          <image class="prize-icon" src="/images/icons/workspace_premium.svg" mode="aspectFit"></image>
+          <view class="prize-icon-bg">
+            <image class="prize-icon-bg-img" src="/images/icons/workspace_premium.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+        <view class="prize-content">
+          <text class="prize-rank gold">第一名</text>
+          <text class="prize-name">{{prizes[0].name || '定制学术恒温杯'}}</text>
+          <view class="prize-tag">
+            <image class="prize-tag-icon" src="/images/icons/star.svg" mode="aspectFit"></image>
+            <text>{{prizes[0].feature || '限量木纹设计'}}</text>
+          </view>
+        </view>
+        <image class="prize-arrow" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+
+      <!-- Card 2: 2nd Place -->
+      <view class="prize-card second" bindtap="goToPrizeDetail" data-id="{{prizes[1].id}}">
+        <view class="prize-icon-wrapper green">
+          <image class="prize-icon" src="/images/icons/book_2.svg" mode="aspectFit"></image>
+          <view class="prize-icon-bg top-left">
+            <image class="prize-icon-bg-img" src="/images/icons/school.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+        <view class="prize-content">
+          <text class="prize-rank">第二名</text>
+          <text class="prize-name">{{prizes[1].name || '博雅文具礼盒'}}</text>
+          <text class="prize-desc">{{prizes[1].description || '含钢笔与手工笔记本'}}</text>
+        </view>
+        <image class="prize-arrow" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+
+      <!-- Card 3: 3rd Place -->
+      <view class="prize-card third" bindtap="goToPrizeDetail" data-id="{{prizes[2].id}}">
+        <view class="prize-icon-wrapper lime">
+          <image class="prize-icon" src="/images/icons/local_cafe.svg" mode="aspectFit"></image>
+          <view class="prize-icon-bg bottom-right">
+            <image class="prize-icon-bg-img" src="/images/icons/energy_savings_leaf.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+        <view class="prize-content">
+          <text class="prize-rank lime">第三名</text>
+          <text class="prize-name">{{prizes[2].name || '校园咖啡季卡'}}</text>
+          <text class="prize-desc">{{prizes[2].description || '全校5家门店通用'}}</text>
+        </view>
+        <image class="prize-arrow" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+
+      <!-- Card 4: Honorable Mention -->
+      <view class="prize-card honorable" bindtap="goToPrizeDetail" data-id="{{prizes[3].id}}">
+        <view class="prize-icon-wrapper gray">
+          <image class="prize-icon" src="/images/icons/military_tech.svg" mode="aspectFit"></image>
+        </view>
+        <view class="prize-content">
+          <text class="prize-rank gray">优胜奖</text>
+          <text class="prize-name">{{prizes[3].name || '数字勋章与积分'}}</text>
+          <text class="prize-desc">{{prizes[3].description || '额外奖励 500 积分'}}</text>
+        </view>
+        <image class="prize-arrow" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <!-- Callout Section -->
+    <view class="callout-card" bindtap="goToRules">
+      <view class="callout-content">
+        <text class="callout-title">如何赢取？</text>
+        <text class="callout-desc">保持活动总积分或总步数排名靠前即可入围</text>
+        <view class="callout-btn">查看规则</view>
+      </view>
+      <view class="callout-bg-icon">
+        <image class="trophy-icon" src="/images/icons/emoji_events.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+  </main>
+</view>

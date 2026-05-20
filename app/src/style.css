@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background-color: #f2f9ea;
+  min-height: 100vh;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* 隐藏滚动条 */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 玻璃效果 */
+.glass-nav {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 卡片阴影 */
+.bubbly-shadow {
+  box-shadow: 0 8px 24px rgba(23, 106, 33, 0.06);
+}
+
+/* 进度环 */
+.vine-stroke {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 250;
+  stroke-linecap: round;
+}

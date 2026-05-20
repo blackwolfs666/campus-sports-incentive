@@ -1,0 +1,84 @@
+<view class="page">
+  <view class="page-header">
+    <view class="header-side" bindtap="goToProfile">
+      <image class="header-avatar" src="/images/default-avatar.png" mode="aspectFill"></image>
+    </view>
+    <text class="header-title">邮青步纪</text>
+    <view class="header-side right"></view>
+  </view>
+
+  <view class="content">
+    <view class="search-box">
+      <image src="/images/icons/info.svg" mode="aspectFit"></image>
+      <input value="{{keyword}}" placeholder="搜索活动..." bindinput="onSearchInput" />
+    </view>
+
+    <view class="filter-panel">
+      <view class="status-tabs">
+        <view class="status-tab {{activeTab === 'signup' ? 'active' : ''}}" data-status="signup" bindtap="switchStatus">报名中</view>
+        <view class="status-tab {{activeTab === 'active' ? 'active' : ''}}" data-status="active" bindtap="switchStatus">进行中</view>
+        <view class="status-tab {{activeTab === 'ended' ? 'active' : ''}}" data-status="ended" bindtap="switchStatus">已结束</view>
+      </view>
+
+      <view class="join-tabs">
+        <view class="join-chip {{joinFilter === 'all' ? 'active' : ''}}" data-filter="all" bindtap="switchJoinFilter">全部</view>
+        <view class="join-chip {{joinFilter === 'joined' ? 'active' : ''}}" data-filter="joined" bindtap="switchJoinFilter">已报名</view>
+        <view class="join-chip {{joinFilter === 'notJoined' ? 'active' : ''}}" data-filter="notJoined" bindtap="switchJoinFilter">未报名</view>
+      </view>
+    </view>
+
+    <view class="mock-note">{{joinFilter === 'joined' ? '这里只展示你已经报名的活动。' : joinFilter === 'notJoined' ? '这里只展示你尚未报名的活动。' : '活动列表来自后端接口，报名状态会实时保存。'}}</view>
+
+    <view wx:if="{{filteredActivities.length}}" class="activity-list">
+      <view class="activity-card" wx:for="{{filteredActivities}}" wx:key="id" data-id="{{item.id}}" bindtap="goDetail">
+        <view class="cover {{item.coverTone}}">
+          <view class="cover-shade"></view>
+          <view class="status-badge {{item.status}}">
+            <view class="status-dot"></view>
+            <text>{{item.statusText}}</text>
+          </view>
+          <view class="joined-badge" wx:if="{{item.isRegistered}}">
+            <image src="/images/icons/emoji_events.svg" mode="aspectFit"></image>
+            <text>已报名</text>
+          </view>
+          <view class="not-joined-badge" wx:else>
+            <image src="/images/icons/person.svg" mode="aspectFit"></image>
+            <text>未报名</text>
+          </view>
+        </view>
+
+        <view class="card-content">
+          <view class="card-title-row">
+            <text class="activity-title">{{item.displayName}}</text>
+            <button
+              class="{{item.status === 'ended' ? 'ended-action' : item.isRegistered ? 'joined-action' : ''}}"
+              catchtap="goDetail"
+              data-id="{{item.id}}"
+            >{{item.status === 'signup' && !item.isRegistered ? '去报名' : '查看详情'}}</button>
+          </view>
+
+          <view class="meta-row">
+            <view>
+              <image src="/images/icons/history_edu.svg" mode="aspectFit"></image>
+              <text>{{item.startDate}} - {{item.endDate}}</text>
+            </view>
+            <view>
+              <image src="/images/icons/person.svg" mode="aspectFit"></image>
+              <text>{{item.participants}} {{item.status === 'signup' ? '人已报名' : '人已参加'}}</text>
+            </view>
+          </view>
+
+          <view class="summary-row">
+            <text class="summary green">{{item.rulesShort}}</text>
+            <text class="summary amber">{{item.rewardShort}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:else>
+      <image src="/images/icons/flag.svg" mode="aspectFit"></image>
+      <text>暂无{{activeTab === 'signup' ? '报名中' : activeTab === 'active' ? '进行中' : '已结束'}}活动</text>
+    </view>
+  </view>
+</view>

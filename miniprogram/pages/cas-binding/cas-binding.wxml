@@ -1,0 +1,41 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">绑定学校账号</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="content">
+    <view wx:if="{{status && status.cas_binded}}" class="status-card bound">
+      <view class="status-icon">
+        <image src="/images/icons/school.svg" mode="aspectFit"></image>
+      </view>
+      <text class="status-title">已绑定学校账号</text>
+      <text class="status-line">ID：{{status.employee_id}}</text>
+      <text class="status-line">姓名：{{status.name}}</text>
+      <text class="status-line">部门：{{status.department_name || '未识别部门'}}</text>
+      <text class="status-line">身份：{{status.edu_person_type || '校内用户'}}</text>
+    </view>
+
+    <view class="form-card">
+      <text class="section-title">统一身份认证</text>
+      <text class="section-desc">请输入学校 IDS 账号密码，系统只用于本次认证，不会保存密码。</text>
+
+      <view class="field">
+        <text>学号 / 工号</text>
+        <input value="{{username}}" data-field="username" bindinput="onInput" placeholder="请输入学号或工号" />
+      </view>
+
+      <view class="field">
+        <text>密码</text>
+        <input password value="{{password}}" data-field="password" bindinput="onInput" placeholder="请输入统一认证密码" />
+      </view>
+
+      <button class="submit-btn" bindtap="submitBind" loading="{{loading}}">
+        {{status && status.cas_binded ? '重新绑定' : '确认绑定'}}
+      </button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,281 @@
+/* Page Container */
+.page {
+  min-height: 100vh;
+  background-color: #f2f9ea;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* Main Content */
+.main-content {
+  max-width: 448px;
+  margin: 0 auto;
+  padding: 24px 24px 128px;
+}
+
+/* Hero Section */
+.hero-section {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.hero-bg-icon {
+  position: absolute;
+  top: -16px;
+  right: -8px;
+  opacity: 0.2;
+}
+
+.eco-icon {
+  width: 96px;
+  height: 96px;
+}
+
+.hero-title {
+  display: block;
+  font-size: 36px;
+  font-weight: 800;
+  color: #176a21;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+
+.hero-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #575e52;
+}
+
+/* Prize List */
+.prize-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+/* Prize Card */
+.prize-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background-color: #ebf3e3;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(23, 106, 33, 0.06);
+  transition: all 0.3s ease;
+}
+
+.prize-card.first {
+  border-left: 8px solid #fdc003;
+}
+
+.prize-card.second {
+  border-left: 8px solid #d6e0cd;
+}
+
+.prize-card.third {
+  border-left: 8px solid #b9f474;
+}
+
+.prize-card.honorable {
+  border-left: none;
+}
+
+/* Prize Icon Wrapper */
+.prize-icon-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.prize-icon-wrapper.gold {
+  background-color: #fdc003;
+}
+
+.prize-icon-wrapper.green {
+  background-color: #9df197;
+}
+
+.prize-icon-wrapper.lime {
+  background-color: #b9f474;
+}
+
+.prize-icon-wrapper.gray {
+  background-color: #d6e0cd;
+}
+
+.prize-icon {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  z-index: 2;
+}
+
+.prize-icon-wrapper.gold .prize-icon {
+  filter: invert(0.3) sepia(1) saturate(3) hue-rotate(10deg);
+}
+
+.prize-icon-wrapper.green .prize-icon {
+  filter: invert(0.4) sepia(1) saturate(2) hue-rotate(80deg);
+}
+
+.prize-icon-wrapper.lime .prize-icon {
+  filter: invert(0.4) sepia(1) saturate(2) hue-rotate(50deg);
+}
+
+.prize-icon-wrapper.gray .prize-icon {
+  filter: invert(0.3) sepia(0.5) saturate(0.5);
+}
+
+/* Prize Icon Background Decoration */
+.prize-icon-bg {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  opacity: 0.2;
+  transform: rotate(12deg);
+}
+
+.prize-icon-bg.top-left {
+  top: -8px;
+  left: -8px;
+  bottom: auto;
+  right: auto;
+  transform: rotate(-12deg);
+}
+
+.prize-icon-bg.bottom-right {
+  bottom: -4px;
+  right: -4px;
+}
+
+.prize-icon-bg-img {
+  width: 48px;
+  height: 48px;
+}
+
+/* Prize Content */
+.prize-content {
+  flex: 1;
+}
+
+.prize-rank {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
+  color: #3c6600;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.prize-rank.gold {
+  color: #755700;
+}
+
+.prize-rank.lime {
+  color: #345900;
+}
+
+.prize-rank.gray {
+  color: #575e52;
+}
+
+.prize-name {
+  display: block;
+  font-size: 18px;
+  font-weight: bold;
+  color: #2a3127;
+  line-height: 1.3;
+}
+
+.prize-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #176a21;
+}
+
+.prize-tag-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.prize-desc {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #575e52;
+  margin-top: 8px;
+}
+
+/* Prize Arrow */
+.prize-arrow {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Callout Card */
+.callout-card {
+  position: relative;
+  background-color: #fdc003;
+  border-radius: 8px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.callout-content {
+  position: relative;
+  z-index: 10;
+}
+
+.callout-title {
+  display: block;
+  font-size: 16px;
+  font-weight: bold;
+  color: #553e00;
+}
+
+.callout-desc {
+  display: block;
+  font-size: 14px;
+  color: #553e00;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+.callout-btn {
+  display: inline-block;
+  margin-top: 16px;
+  background-color: #176a21;
+  color: #d1ffc8;
+  padding: 8px 24px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: inset 0 2px 4px rgba(209, 255, 200, 0.3);
+}
+
+/* Callout Background Icon */
+.callout-bg-icon {
+  position: absolute;
+  right: -16px;
+  bottom: -16px;
+  transform: scale(1);
+  transition: transform 0.5s ease;
+}
+
+.trophy-icon {
+  width: 96px;
+  height: 96px;
+  opacity: 0.2;
+}

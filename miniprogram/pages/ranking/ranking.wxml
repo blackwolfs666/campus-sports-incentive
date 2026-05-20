@@ -1,0 +1,79 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">{{pageTitle}}</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="content">
+    <view class="segmented two">
+      <view class="segment {{rankType === 'points' ? 'active' : ''}}" data-type="points" bindtap="filterChange">总积分榜</view>
+      <view class="segment {{rankType === 'steps' ? 'active' : ''}}" data-type="steps" bindtap="filterChange">总步数榜</view>
+    </view>
+
+    <view class="rule-hint">
+      <image src="/images/icons/info.svg" mode="aspectFit"></image>
+      <text>{{ruleHint}}</text>
+    </view>
+
+    <view class="podium-card">
+      <view class="podium">
+        <view class="podium-person second" wx:if="{{topThree[1]}}">
+          <view class="avatar-wrap silver">
+            <image src="{{topThree[1].avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+            <text>2</text>
+          </view>
+          <text class="person-name">{{topThree[1].name}}</text>
+          <text class="person-steps">{{topThree[1].rankValue}} {{topThree[1].rankUnit}}</text>
+          <view class="base silver-base"></view>
+        </view>
+
+        <view class="podium-person first" wx:if="{{topThree[0]}}">
+          <text class="crown">★</text>
+          <view class="avatar-wrap gold">
+            <image src="{{topThree[0].avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+            <text>1</text>
+          </view>
+          <text class="person-name champion">{{topThree[0].name}}</text>
+          <text class="winner-steps">{{topThree[0].rankValue}} {{topThree[0].rankUnit}}</text>
+          <view class="base gold-base"></view>
+        </view>
+
+        <view class="podium-person third" wx:if="{{topThree[2]}}">
+          <view class="avatar-wrap bronze">
+            <image src="{{topThree[2].avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+            <text>3</text>
+          </view>
+          <text class="person-name">{{topThree[2].name}}</text>
+          <text class="person-steps">{{topThree[2].rankValue}} {{topThree[2].rankUnit}}</text>
+          <view class="base bronze-base"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="rank-list">
+      <view class="rank-row" wx:for="{{leaderboard}}" wx:key="id">
+        <text class="rank-num">{{item.rank}}</text>
+        <image class="rank-avatar" src="{{item.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+        <view class="rank-info">
+          <text class="rank-name">{{item.name}}</text>
+          <text class="rank-dept">{{item.department}}</text>
+        </view>
+        <text class="rank-steps">{{item.rankValue}} {{item.rankUnit}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="my-rank-card">
+    <view class="my-avatar">
+      <image src="{{userInfo.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+    </view>
+    <view class="my-info">
+      <text>我的排名：第 {{myRank}} 名</text>
+      <text>{{myValue}} {{myValueLabel}} · {{rankType === 'points' ? '总积分榜' : '总步数榜'}}</text>
+    </view>
+    <image src="/images/icons/trending_up.svg" mode="aspectFit"></image>
+  </view>
+</view>

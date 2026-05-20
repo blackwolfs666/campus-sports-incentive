@@ -1,0 +1,84 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">设置与帮助</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="content">
+    <view class="profile-card">
+      <image class="avatar" src="{{userInfo.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <view class="profile-info">
+        <text class="name">{{userInfo.name || '新用户'}}</text>
+        <text class="meta">ID：{{displayUserId || '未生成'}}</text>
+        <text class="meta">{{userInfo.department_name || '未设置部门'}}</text>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-title">账号信息</view>
+      <view class="setting-row" bindtap="copyUserId">
+        <view class="setting-copy">
+          <text>复制用户 ID</text>
+          <text>{{displayUserId || '暂无用户 ID'}}</text>
+        </view>
+        <image class="chevron" src="/images/icons/content_copy.svg" mode="aspectFit"></image>
+      </view>
+
+      <view class="setting-row" bindtap="goCasBinding">
+        <view class="setting-copy">
+          <text>{{casStatus && casStatus.cas_binded ? '学校账号已绑定' : '绑定学校账号'}}</text>
+          <text wx:if="{{casStatus && casStatus.cas_binded}}">
+            {{casStatus.employee_id}} · {{casStatus.department_name || '未识别部门'}}
+          </text>
+          <text wx:else>关联学号/工号、部门和身份类型</text>
+        </view>
+        <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-title">隐私权限</view>
+      <view class="setting-row" bindtap="openAuthSetting">
+        <view class="setting-copy">
+          <text>微信运动权限</text>
+          <text>{{werunAuthorized ? '已授权，可同步微信运动步数' : '未授权，无法同步真实步数'}}</text>
+        </view>
+        <view class="status-pill {{werunAuthorized ? 'ok' : 'warn'}}">
+          {{werunAuthorized ? '已授权' : '去设置'}}
+        </view>
+      </view>
+      <view class="setting-row plain">
+        <view class="setting-copy">
+          <text>数据使用说明</text>
+          <text>步数仅用于活动排名、打卡和奖品兑换，不展示微信原始加密数据。</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-title">本地数据</view>
+      <view class="setting-row" bindtap="clearLocalCache">
+        <view class="setting-copy">
+          <text>清理本地缓存</text>
+          <text>清除本机保存的同步日期等临时数据，不会删除服务器数据。</text>
+        </view>
+        <image class="chevron" src="/images/icons/chevron_right.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-title">帮助</view>
+      <view class="help-item">
+        <text>同步失败</text>
+        <text>请确认后端服务可访问、微信运动权限已开启，并使用真机测试。</text>
+      </view>
+      <view class="help-item">
+        <text>奖品核销</text>
+        <text>用户只生成兑换码，只有活动管理员扫码或输入兑换码后才会完成核销。</text>
+      </view>
+    </view>
+  </view>
+</view>

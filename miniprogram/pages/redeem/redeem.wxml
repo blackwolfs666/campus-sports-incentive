@@ -1,0 +1,85 @@
+<view class="page">
+  <view class="page-header">
+    <view class="back-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="page-title">奖品兑换</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="main-content" wx:if="{{winner && prize}}">
+    <view class="prize-hero">
+      <view class="prize-hero-card">
+        <view class="hero-bg-1"></view>
+        <view class="hero-bg-2"></view>
+
+        <view class="prize-image-wrapper">
+          <view class="prize-image-glow"></view>
+          <image class="prize-image" src="{{prize.image}}" mode="aspectFit"></image>
+          <view class="prize-badge">
+            <image class="prize-badge-icon" src="/images/icons/emoji_events.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+
+        <view class="prize-info">
+          <view class="prize-tag">{{prize.rank_name}}</view>
+          <text class="prize-title">{{prize.name}}</text>
+          <text class="prize-desc">请出示本页兑换码，由工作人员核销后领取奖品。</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="qr-section">
+      <view class="qr-header">
+        <text class="qr-title">核销凭证</text>
+        <text class="qr-subtitle">{{statusText}}</text>
+      </view>
+
+      <view class="qr-wrapper">
+        <view class="qr-container">
+          <image class="qr-code" src="{{qrCodeUrl}}" mode="aspectFit" wx:if="{{qrCodeUrl}}"></image>
+          <view class="qr-placeholder" wx:else>
+            <view class="qr-corner"></view>
+            <view class="qr-pattern"></view>
+            <view class="qr-corner bottom-right"></view>
+          </view>
+        </view>
+        <view class="corner-bracket top-left"></view>
+        <view class="corner-bracket top-right"></view>
+        <view class="corner-bracket bottom-left"></view>
+        <view class="corner-bracket bottom-right"></view>
+      </view>
+
+      <view class="code-info">
+        <view class="code-row" bindtap="copyCode">
+          <text class="code-text">兑换码：{{code || '暂无'}}</text>
+          <image class="copy-icon" src="/images/icons/content_copy.svg" mode="aspectFit"></image>
+        </view>
+        <text class="code-expire">有效至：{{expireDate}}</text>
+      </view>
+
+      <button wx:if="{{winner.status === 'pending'}}" class="refresh-btn" bindtap="claimPrize">生成兑换码</button>
+      <button wx:else class="refresh-btn" bindtap="refreshStatus">刷新状态</button>
+    </view>
+
+    <view class="instructions-section">
+      <view class="instructions-icon-wrapper">
+        <image class="instructions-icon" src="/images/icons/info.svg" mode="aspectFit"></image>
+      </view>
+      <view class="instructions-content">
+        <text class="instructions-title">兑换说明</text>
+        <view class="instructions-list">
+          <text class="instruction-item">1. 请向工作人员出示本页兑换码进行核销。</text>
+          <text class="instruction-item">2. 奖品：<text class="highlight">{{prize.name}}</text>。</text>
+          <text class="instruction-item">3. 兑换码仅限本人使用，过期后不可核销。</text>
+          <text class="instruction-item">4. 核销完成后，奖品状态会变为已核销。</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:elif="{{!isLoading}}">
+    <text>未找到奖品兑换信息</text>
+    <button bindtap="goBack">返回</button>
+  </view>
+</view>

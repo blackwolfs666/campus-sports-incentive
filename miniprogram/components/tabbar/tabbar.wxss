@@ -1,0 +1,53 @@
+/* TabBar Container - rounded-t-[3rem](48px) px-4(16px) pb-6(24px) pt-3(12px) */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(235, 243, 227, 0.8);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -16rpx 48rpx rgba(23, 106, 33, 0.06);
+  z-index: 999;
+  border-radius: 96rpx 96rpx 0 0;
+}
+
+/* TabBar Item - px-5(20px) py-2(8px) rounded-full */
+.tabbar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 40rpx;
+  border-radius: 9999rpx;
+  transition: all 0.3s ease;
+}
+
+/* Active State - bg-[#9df197] scale-110 */
+.tabbar-item.active {
+  background-color: #9df197;
+  transform: scale(1.1);
+}
+
+/* TabBar Icon - 24px = 48rpx */
+.tabbar-icon {
+  width: 48rpx;
+  height: 48rpx;
+}
+
+/* TabBar Text - text-[11px] mt-1(4px) */
+.tabbar-text {
+  font-size: 22rpx;
+  font-weight: bold;
+  color: #3c6600;
+  margin-top: 4rpx;
+}
+
+.tabbar-item.active .tabbar-text {
+  color: #176a21;
+}

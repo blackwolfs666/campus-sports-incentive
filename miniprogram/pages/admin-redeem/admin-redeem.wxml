@@ -1,0 +1,47 @@
+<view class="page">
+  <view class="page-header">
+    <view class="icon-btn" bindtap="goBack">
+      <image src="/images/icons/arrow_back.svg" mode="aspectFit"></image>
+    </view>
+    <text class="header-title">核销奖品</text>
+    <view class="header-spacer"></view>
+  </view>
+
+  <view class="content">
+    <view class="scan-card">
+      <view class="scan-icon">
+        <image src="/images/icons/workspace_premium.svg" mode="aspectFit"></image>
+      </view>
+      <text class="scan-title">扫码核销奖品</text>
+      <text class="scan-desc">扫描用户出示的兑换二维码，或手动输入 12 位兑换码完成核销。</text>
+      <button class="primary-btn" bindtap="scanCode" loading="{{loading}}">扫码核销</button>
+    </view>
+
+    <view class="form-card">
+      <view class="section-title">手动输入核销码</view>
+      <input
+        class="code-input"
+        type="number"
+        maxlength="12"
+        value="{{claimCode}}"
+        bindinput="onInput"
+        placeholder="请输入12位兑换码"
+      />
+      <view class="code-preview" wx:if="{{codePreview}}">
+        {{codePreview}}
+      </view>
+      <view class="actions">
+        <button class="secondary-btn" bindtap="clearCode">清空</button>
+        <button class="primary-btn" bindtap="confirmRedeem" loading="{{loading}}">确认核销</button>
+      </view>
+    </view>
+
+    <view wx:if="{{result}}" class="result-card {{result.success ? 'success' : 'error'}}">
+      <text class="result-title">{{result.message}}</text>
+      <text class="result-desc" wx:if="{{result.prizeName}}">奖品：{{result.prizeName}}</text>
+      <text class="result-desc" wx:if="{{result.activityName}}">活动：{{result.activityName}}</text>
+      <text class="result-desc" wx:if="{{result.userName}}">获奖用户：{{result.userName}}</text>
+      <text class="result-desc" wx:if="{{result.status}}">状态：{{result.status}}</text>
+    </view>
+  </view>
+</view>

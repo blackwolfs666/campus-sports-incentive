@@ -1,0 +1,59 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/activities/activities",
+    "pages/activity-detail/activity-detail",
+    "pages/checkin-feed/checkin-feed",
+    "pages/checkin-edit/checkin-edit",
+    "pages/admin-dashboard/admin-dashboard",
+    "pages/admin-activities/admin-activities",
+    "pages/admin-activity-form/admin-activity-form",
+    "pages/admin-activity-admins/admin-activity-admins",
+    "pages/admin-redeem/admin-redeem",
+    "pages/cas-binding/cas-binding",
+    "pages/ranking/ranking",
+    "pages/prizes/prizes",
+    "pages/my-prizes/my-prizes",
+    "pages/prize-winners/prize-winners",
+    "pages/profile/profile",
+    "pages/settings/settings",
+    "pages/redeem/redeem",
+    "pages/login/login"
+  ],
+  "permission": {
+    "scope.werun": {
+      "desc": "用于同步您的微信运动步数，参与步数排行榜和奖品兑换"
+    }
+  },
+  "window": {
+    "navigationBarBackgroundColor": "#f0fdf4",
+    "navigationBarTitleText": "邮青步纪",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f0fdf4",
+    "navigationStyle": "default"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#9ca3af",
+    "selectedColor": "#15803d",
+    "backgroundColor": "#f0fdf4",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/activities/activities",
+        "text": "活动"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}
