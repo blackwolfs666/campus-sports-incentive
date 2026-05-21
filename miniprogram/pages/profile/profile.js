@@ -9,6 +9,11 @@ function formatDisplayUserId(userInfo) {
   return `U${String(id).padStart(7, '0')}`
 }
 
+function normalizeUserInfo(userInfo) {
+  if (!userInfo) return null
+  return app.normalizeUserInfo ? app.normalizeUserInfo(userInfo) : userInfo
+}
+
 Page({
   data: {
     userInfo: null,
@@ -34,16 +39,73 @@ Page({
     }
   },
 
-  fetchData() {
+  hasLoginToken() {
+    const storedToken = wx.getStorageSync('token')
+    if (!app.globalData.token && storedToken) {
+      app.globalData.token = storedToken
+    }
+    return !!app.globalData.token
+  },
+
+  resetGuestData() {
+    this.setData({
+      userInfo: null,
+      displayUserId: '',
+      todaySteps: 0,
+      totalDistance: 0,
+      streakDays: 0,
+      healthLevel: 1,
+      myPrizes: [],
+      pendingPrizeCount: 0,
+      casStatus: null
+    })
+  },
+
+  handleAuthError(err) {
+    if (err && err.statusCode === 401 && app.clearAuth) {
+      app.clearAuth()
+      this.resetGuestData()
+      return true
+    }
+    return false
+  },
+
+  setUserInfo(userInfo) {
+    const normalized = normalizeUserInfo(userInfo)
+    if (!normalized) return
+    app.globalData.userInfo = normalized
+    this.setData({
+      userInfo: normalized,
+      displayUserId: formatDisplayUserId(normalized)
+    })
+  },
+
+  refreshUserInfo() {
     if (app.globalData.userInfo) {
-      this.setData({
-        userInfo: app.globalData.userInfo,
-        displayUserId: formatDisplayUserId(app.globalData.userInfo)
-      })
+      this.setUserInfo(app.globalData.userInfo)
     }
 
+    if (!formatDisplayUserId(app.globalData.userInfo)) {
+      app.getUserInfo().then(userInfo => {
+        this.setUserInfo(userInfo)
+      }).catch(err => {
+        if (this.handleAuthError(err)) return
+        console.error('刷新用户信息失败', err)
+      })
+    }
+  },
+
+  fetchData() {
+    if (!this.hasLoginToken()) {
+      this.resetGuestData()
+      return
+    }
+
+    this.refreshUserInfo()
+
     app.request({
-      url: '/steps/home'
+      url: '/steps/home',
+      skipLoginRetry: true
     }).then(res => {
       this.setData({
         todaySteps: res.today_steps,
@@ -52,11 +114,13 @@ Page({
         healthLevel: res.health_level
       })
     }).catch(err => {
+      if (this.handleAuthError(err)) return
       console.error('获取个人步数数据失败', err)
     })
 
     app.request({
-      url: '/prizes/my/list'
+      url: '/prizes/my/list',
+      skipLoginRetry: true
     }).then(res => {
       const myPrizes = res || []
       this.setData({
@@ -64,29 +128,29 @@ Page({
         pendingPrizeCount: myPrizes.filter(item => item.status === 'pending').length
       })
     }).catch(err => {
+      if (this.handleAuthError(err)) return
       console.error('获取我的奖品失败', err)
     })
 
     app.request({
-      url: '/cas/status'
+      url: '/cas/status',
+      skipLoginRetry: true
     }).then(res => {
       this.setData({ casStatus: res })
       if (res.cas_binded) {
+        const baseUserInfo = this.data.userInfo || app.globalData.userInfo || {}
         const userInfo = {
-          ...(this.data.userInfo || {}),
-          name: res.name || this.data.userInfo?.name,
+          ...baseUserInfo,
+          name: res.name || baseUserInfo.name,
           employee_id: res.employee_id,
           cas_binded: true,
           edu_person_type: res.edu_person_type,
           department_name: res.department_name
         }
-        app.globalData.userInfo = userInfo
-        this.setData({
-          userInfo,
-          displayUserId: formatDisplayUserId(userInfo)
-        })
+        this.setUserInfo(userInfo)
       }
     }).catch(err => {
+      if (this.handleAuthError(err)) return
       console.error('获取CAS绑定状态失败', err)
     })
   },

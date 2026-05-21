@@ -59,28 +59,81 @@ Page({
 
   onLoad() {
     const systemInfo = wx.getSystemInfoSync()
-    const stepHistoryMap = wx.getStorageSync(STEP_HISTORY_KEY) || {}
     this.setData({
       statusBarHeight: systemInfo.statusBarHeight || 20,
-      stepHistoryMap,
-      calendarCells: this.buildCalendarCells(0, 10000, stepHistoryMap)
+      stepHistoryMap: {},
+      calendarCells: this.buildCalendarCells(0, 10000, {}, false)
     })
-    this.fetchJoinedActivities()
-    this.fetchHomeData()
+    if (this.hasLoginToken()) {
+      this.fetchJoinedActivities()
+      this.fetchHomeData()
+    } else {
+      this.resetUserScopedData()
+    }
   },
 
   onShow() {
-    this.fetchJoinedActivities()
-    this.fetchHomeData()
+    if (this.hasLoginToken()) {
+      this.fetchJoinedActivities()
+      this.fetchHomeData()
+    } else {
+      this.resetUserScopedData()
+    }
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
   },
 
+  hasLoginToken() {
+    const app = getApp()
+    const storedToken = wx.getStorageSync('token')
+    if (!app.globalData.token && storedToken) {
+      app.globalData.token = storedToken
+    }
+    return !!app.globalData.token
+  },
+
+  resetUserScopedData() {
+    wx.removeStorageSync(STEP_HISTORY_KEY)
+    this.setData({
+      userInfo: null,
+      todaySteps: 0,
+      todayStepsText: '0',
+      totalSteps: 0,
+      totalDistance: 0,
+      streakDays: 0,
+      healthLevel: 1,
+      dailyGoal: 10000,
+      dailyGoalText: '10,000',
+      remainingStepsText: '10,000',
+      departmentName: '',
+      lastSyncTime: '',
+      weekTotal: 0,
+      progressPercent: 0,
+      activeActivity: null,
+      activeActivityIndex: 0,
+      joinedActivities: [],
+      joinedActivityCount: 0,
+      stepHistoryMap: {},
+      calendarCells: this.buildCalendarCells(0, 10000, {}, false)
+    })
+  },
+
   fetchJoinedActivities() {
+    if (!this.hasLoginToken()) {
+      this.setData({
+        joinedActivities: [],
+        joinedActivityCount: 0,
+        activeActivityIndex: 0,
+        activeActivity: null
+      })
+      return
+    }
+
     const app = getApp()
     app.request({
-      url: '/activities/my'
+      url: '/activities/my',
+      skipLoginRetry: true
     }).then((res) => {
       const joinedActivities = (res.items || []).filter(item => item.status === 'active')
       const activeActivityIndex = Math.min(this.data.activeActivityIndex || 0, Math.max(joinedActivities.length - 1, 0))
@@ -92,6 +145,9 @@ Page({
       })
     }).catch((err) => {
       console.error('获取我参与的活动失败', err)
+      if (err.statusCode === 401 && app.clearAuth) {
+        app.clearAuth()
+      }
       this.setData({
         joinedActivities: [],
         joinedActivityCount: 0,
@@ -102,9 +158,15 @@ Page({
   },
 
   fetchHomeData() {
+    if (!this.hasLoginToken()) {
+      this.resetUserScopedData()
+      return
+    }
+
     const app = getApp()
     app.request({
-      url: '/steps/home'
+      url: '/steps/home',
+      skipLoginRetry: true
     }).then(res => {
       const todaySteps = Number(res.today_steps || 0)
       const dailyGoal = Number(res.daily_goal || 10000)
@@ -135,13 +197,18 @@ Page({
         weekTotal: res.week_challenge?.week_total || 0,
         progressPercent,
         userInfo: app.globalData.userInfo,
-        calendarCells: this.buildCalendarCells(todaySteps, dailyGoal, this.data.stepHistoryMap)
+        calendarCells: this.buildCalendarCells(todaySteps, dailyGoal, this.data.stepHistoryMap, true)
       })
       this.fetchStepHistory(dailyGoal, todaySteps)
     }).catch(err => {
       console.error('获取首页数据失败', err)
+      if (err.statusCode === 401 && app.clearAuth) {
+        app.clearAuth()
+        this.resetUserScopedData()
+        return
+      }
       this.setData({
-        calendarCells: this.buildCalendarCells(this.data.todaySteps || 0, this.data.dailyGoal || 10000, this.data.stepHistoryMap)
+        calendarCells: this.buildCalendarCells(this.data.todaySteps || 0, this.data.dailyGoal || 10000, this.data.stepHistoryMap, this.hasLoginToken())
       })
     })
   },
@@ -158,10 +225,16 @@ Page({
   },
 
   fetchStepHistory(dailyGoal, todaySteps) {
+    if (!this.hasLoginToken()) {
+      this.resetUserScopedData()
+      return
+    }
+
     const app = getApp()
     app.request({
       url: '/steps/history',
-      data: { days: 45 }
+      data: { days: 45 },
+      skipLoginRetry: true
     }).then(records => {
       const history = {}
       ;(records || []).forEach(record => {
@@ -173,17 +246,22 @@ Page({
       wx.setStorageSync(STEP_HISTORY_KEY, history)
       this.setData({
         stepHistoryMap: history,
-        calendarCells: this.buildCalendarCells(todaySteps, dailyGoal, history)
+        calendarCells: this.buildCalendarCells(todaySteps, dailyGoal, history, true)
       })
     }).catch(err => {
       console.warn('获取运动日历失败', err)
+      if (err.statusCode === 401 && app.clearAuth) {
+        app.clearAuth()
+        this.resetUserScopedData()
+        return
+      }
       this.setData({
-        calendarCells: this.buildCalendarCells(todaySteps, dailyGoal, this.data.stepHistoryMap)
+        calendarCells: this.buildCalendarCells(todaySteps, dailyGoal, this.data.stepHistoryMap, this.hasLoginToken())
       })
     })
   },
 
-  buildCalendarCells(todaySteps, dailyGoal, history = {}) {
+  buildCalendarCells(todaySteps, dailyGoal, history = {}, showUserData = true) {
     const today = new Date()
     const year = today.getFullYear()
     const month = today.getMonth()
@@ -200,17 +278,17 @@ Page({
       const isToday = day === todayDate
       const isFuture = day > todayDate
       const dateKey = `${year}-${`${month + 1}`.padStart(2, '0')}-${`${day}`.padStart(2, '0')}`
-      const steps = isToday ? todaySteps : Number(history[dateKey] || 0)
+      const steps = showUserData ? (isToday ? todaySteps : Number(history[dateKey] || 0)) : 0
       const hitTarget = steps >= dailyGoal
       cells.push({
         key: `day-${day}`,
         day,
         isToday,
         isFuture,
-        hasSteps: steps > 0,
-        missed: !isFuture && !isToday && steps <= 0,
-        hitTarget,
-        stepsLabel: this.formatShortSteps(steps)
+        hasSteps: showUserData && steps > 0,
+        missed: showUserData && !isFuture && !isToday && steps <= 0,
+        hitTarget: showUserData && hitTarget,
+        stepsLabel: showUserData ? this.formatShortSteps(steps) : ''
       })
     }
 

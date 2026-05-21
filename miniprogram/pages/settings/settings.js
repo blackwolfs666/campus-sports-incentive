@@ -9,6 +9,11 @@ function formatDisplayUserId(userInfo) {
   return `U${String(id).padStart(7, '0')}`
 }
 
+function normalizeUserInfo(userInfo) {
+  if (!userInfo) return null
+  return app.normalizeUserInfo ? app.normalizeUserInfo(userInfo) : userInfo
+}
+
 Page({
   data: {
     userInfo: null,
@@ -25,37 +30,86 @@ Page({
     this.refreshData()
   },
 
-  refreshData() {
-    const userInfo = app.globalData.userInfo || {}
+  hasLoginToken() {
+    const storedToken = wx.getStorageSync('token')
+    if (!app.globalData.token && storedToken) {
+      app.globalData.token = storedToken
+    }
+    return !!app.globalData.token
+  },
+
+  setUserInfo(userInfo) {
+    const normalized = normalizeUserInfo(userInfo)
+    if (!normalized) return
+    app.globalData.userInfo = normalized
     this.setData({
-      userInfo,
-      displayUserId: formatDisplayUserId(userInfo)
+      userInfo: normalized,
+      displayUserId: formatDisplayUserId(normalized)
     })
-    this.fetchCasStatus()
+  },
+
+  handleAuthError(err) {
+    if (err && err.statusCode === 401 && app.clearAuth) {
+      app.clearAuth()
+      this.setData({
+        userInfo: null,
+        displayUserId: '',
+        casStatus: null
+      })
+      return true
+    }
+    return false
+  },
+
+  refreshUserInfo() {
+    if (app.globalData.userInfo) {
+      this.setUserInfo(app.globalData.userInfo)
+    }
+
+    if (!formatDisplayUserId(app.globalData.userInfo)) {
+      app.getUserInfo().then(userInfo => {
+        this.setUserInfo(userInfo)
+      }).catch(err => {
+        if (this.handleAuthError(err)) return
+        console.error('刷新用户信息失败', err)
+      })
+    }
+  },
+
+  refreshData() {
+    if (this.hasLoginToken()) {
+      this.refreshUserInfo()
+      this.fetchCasStatus()
+    } else {
+      this.setData({
+        userInfo: null,
+        displayUserId: '',
+        casStatus: null
+      })
+    }
     this.fetchAuthSetting()
   },
 
   fetchCasStatus() {
     app.request({
-      url: '/cas/status'
+      url: '/cas/status',
+      skipLoginRetry: true
     }).then(res => {
       this.setData({ casStatus: res })
       if (res.cas_binded) {
+        const baseUserInfo = this.data.userInfo || app.globalData.userInfo || {}
         const userInfo = {
-          ...(this.data.userInfo || {}),
-          name: res.name || this.data.userInfo?.name,
+          ...baseUserInfo,
+          name: res.name || baseUserInfo.name,
           employee_id: res.employee_id,
           cas_binded: true,
           edu_person_type: res.edu_person_type,
           department_name: res.department_name
         }
-        app.globalData.userInfo = userInfo
-        this.setData({
-          userInfo,
-          displayUserId: formatDisplayUserId(userInfo)
-        })
+        this.setUserInfo(userInfo)
       }
     }).catch(err => {
+      if (this.handleAuthError(err)) return
       console.error('获取CAS绑定状态失败', err)
     })
   },

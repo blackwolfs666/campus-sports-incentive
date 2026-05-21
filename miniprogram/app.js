@@ -1,5 +1,19 @@
 const { API_BASE_URL } = require('./config/api')
 
+function getRawUserId(userInfo) {
+  if (!userInfo) return ''
+  return userInfo.id || userInfo.user_id || userInfo.userId || ''
+}
+
+function formatDisplayUserId(userInfo) {
+  if (!userInfo) return ''
+  if (userInfo.displayUserId) return userInfo.displayUserId
+  if (userInfo.display_user_id) return userInfo.display_user_id
+  const id = getRawUserId(userInfo)
+  if (!id) return ''
+  return `U${String(id).padStart(7, '0')}`
+}
+
 App({
   globalData: {
     userInfo: null,
@@ -20,6 +34,23 @@ App({
     }
   },
 
+  normalizeUserInfo(userInfo) {
+    if (!userInfo) return null
+    const normalized = { ...userInfo }
+    const displayUserId = formatDisplayUserId(normalized)
+    if (displayUserId) {
+      normalized.displayUserId = displayUserId
+      normalized.display_user_id = normalized.display_user_id || displayUserId
+    }
+    return normalized
+  },
+
+  clearAuth() {
+    this.globalData.token = null
+    this.globalData.userInfo = null
+    wx.removeStorageSync('token')
+  },
+
   getUserInfo() {
     return new Promise((resolve, reject) => {
       wx.request({
@@ -29,8 +60,9 @@ App({
         },
         success: (res) => {
           if (res.statusCode === 200) {
-            this.globalData.userInfo = res.data
-            resolve(res.data)
+            const userInfo = this.normalizeUserInfo(res.data)
+            this.globalData.userInfo = userInfo
+            resolve(userInfo)
           } else {
             reject(res)
           }
@@ -55,10 +87,14 @@ App({
             data: { code: res.code },
             success: (response) => {
               if (response.statusCode === 200) {
+                const userInfo = this.normalizeUserInfo(response.data.user)
                 this.globalData.token = response.data.token
-                this.globalData.userInfo = response.data.user
+                this.globalData.userInfo = userInfo
                 wx.setStorageSync('token', response.data.token)
-                resolve(response.data)
+                resolve({
+                  ...response.data,
+                  user: userInfo
+                })
               } else {
                 reject(response)
               }
@@ -87,6 +123,11 @@ App({
         header,
         success: (res) => {
           if (res.statusCode === 401) {
+            if (options.skipLoginRetry) {
+              reject(res)
+              return
+            }
+
             if (options._retriedAfterLogin) {
               reject(res)
               return
