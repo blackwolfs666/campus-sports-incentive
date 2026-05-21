@@ -50,6 +50,7 @@ class UserResponse(UserBase):
     employee_id: Optional[str] = None
     cas_binded: bool = False
     edu_person_type: Optional[str] = None
+    department_name: Optional[str] = None
     total_steps: int = 0
     total_distance: float = 0.0
     streak_days: int = 0
@@ -162,6 +163,7 @@ class ActivityResponse(BaseModel):
     signupStart: str
     signupEnd: str
     targetGroup: str
+    scopeDepartmentIds: List[int] = Field(default_factory=list)
     participants: int
     maxParticipants: int
     isRegistered: bool = False
@@ -227,6 +229,7 @@ class AdminActivityBase(BaseModel):
     activityStartTime: Optional[datetime] = None
     activityEndTime: Optional[datetime] = None
     scopeText: Optional[str] = ""
+    scopeDepartmentIds: List[int] = Field(default_factory=list)
     maxParticipants: Optional[int] = None
     scoreRule: List[AdminScoreRule] = Field(default_factory=list)
     awardRules: List[AdminAwardRule] = Field(default_factory=list)
@@ -259,6 +262,7 @@ class AdminActivityItem(BaseModel):
     activityStartTime: datetime
     activityEndTime: datetime
     scopeText: str = ""
+    scopeDepartmentIds: List[int] = Field(default_factory=list)
     currentParticipants: int = 0
     maxParticipants: Optional[int] = None
     scoreRule: List[dict] = Field(default_factory=list)

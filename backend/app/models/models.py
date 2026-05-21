@@ -317,6 +317,8 @@ class Activity(Base):
     created_at = Column(DateTime, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), comment="更新时间")
 
+    scope_department_ids_json = Column(Text, nullable=True, comment="Activity scope department IDs JSON")
+
     __table_args__ = (
         Index("idx_activity_status", "status"),
         Index("idx_activity_date_range", "start_date", "end_date"),

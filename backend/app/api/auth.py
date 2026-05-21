@@ -79,6 +79,16 @@ def get_current_user_sync(
     return user
 
 
+def serialize_user_response(db: Session, user: User) -> dict:
+    department_name = None
+    if user.department_id:
+        department = db.query(Department).filter(Department.id == user.department_id).first()
+        department_name = department.name if department else None
+    data = UserResponse.model_validate(user).model_dump()
+    data["department_name"] = department_name
+    return data
+
+
 async def get_wechat_session_key(code: str) -> dict:
     """通过微信code获取openid和session_key"""
     if not settings.WECHAT_APPID or not settings.WECHAT_SECRET:
@@ -147,7 +157,7 @@ async def wechat_login(request: WechatLoginRequest, db: Session = Depends(get_db
     
     return WechatLoginResponse(
         token=token,
-        user=UserResponse.model_validate(user),
+        user=serialize_user_response(db, user),
         is_new_user=is_new_user,
         needs_binding=not bool(user.cas_binded)
     )
@@ -160,7 +170,7 @@ async def get_current_user_info(
 ):
     """获取当前用户信息"""
     current_user = get_current_user_sync(authorization, db)
-    return UserResponse.model_validate(current_user)
+    return serialize_user_response(db, current_user)
 
 
 @router.put("/me", response_model=UserResponse)
@@ -179,4 +189,4 @@ async def update_current_user(
     db.commit()
     db.refresh(current_user)
     
-    return UserResponse.model_validate(current_user)
+    return serialize_user_response(db, current_user)
