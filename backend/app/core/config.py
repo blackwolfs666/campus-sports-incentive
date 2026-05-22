@@ -17,13 +17,13 @@ class Settings(BaseSettings):
     DEV_WECHAT_OPENID: str = "test_openid_7"
     
     # JWT配置
-    SECRET_KEY: str = "change-this-secret-key"
+    SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7天
     
     # 应用配置
     APP_NAME: str = "邮青步纪"
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     # CAS / IDS 配置
     CAS_SERVER_URL: str = ""
