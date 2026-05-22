@@ -3,7 +3,7 @@ import json
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import func, inspect, select, text
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user_sync
@@ -38,6 +38,21 @@ def loads(raw: str | None, fallback):
     return value if isinstance(value, type(fallback)) else fallback
 
 
+def normalize_scope_department_ids(value) -> list[int]:
+    ids = loads(value, []) if isinstance(value, str) else value
+    if not isinstance(ids, list):
+        return []
+    result = []
+    for item in ids:
+        try:
+            department_id = int(item)
+        except (TypeError, ValueError):
+            continue
+        if department_id > 0 and department_id not in result:
+            result.append(department_id)
+    return result
+
+
 def ensure_activity_tables() -> None:
     global _tables_ready
     if _tables_ready:
@@ -46,6 +61,11 @@ def ensure_activity_tables() -> None:
     ActivityParticipant.__table__.create(bind=engine, checkfirst=True)
     Prize.__table__.create(bind=engine, checkfirst=True)
     ActivityPrize.__table__.create(bind=engine, checkfirst=True)
+    inspector = inspect(engine)
+    columns = {item["name"] for item in inspector.get_columns("activities")}
+    if "scope_department_ids_json" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE activities ADD COLUMN scope_department_ids_json TEXT NULL COMMENT 'Activity scope department IDs JSON'"))
     _tables_ready = True
 
 
@@ -119,6 +139,21 @@ def get_activity_first_steps(db: Session, activity: Activity) -> int:
     return int(db.query(func.max(totals.c.total_steps)).scalar() or 0)
 
 
+def validate_activity_scope(db: Session, activity: Activity, user: User) -> None:
+    scope_department_ids = normalize_scope_department_ids(activity.scope_department_ids_json)
+    if not scope_department_ids:
+        return
+    if not user.department_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="请先绑定学校账号后再报名")
+    if int(user.department_id) not in scope_department_ids:
+        department = db.query(Department).filter(Department.id == user.department_id).first()
+        department_name = department.name if department else "当前部门"
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"{department_name} 不在该活动可参与范围内"
+        )
+
+
 def serialize_activity(db: Session, activity: Activity, current_user_id: int) -> ActivityResponse:
     status_key, status_text = current_activity_status(activity)
     is_registered = db.query(ActivityParticipant.id).filter(
@@ -128,6 +163,7 @@ def serialize_activity(db: Session, activity: Activity, current_user_id: int) ->
     participant_count = db.query(func.count(ActivityParticipant.id)).filter(
         ActivityParticipant.activity_id == activity.id
     ).scalar() or 0
+    scope_department_ids = normalize_scope_department_ids(activity.scope_department_ids_json)
     my_steps = get_activity_steps(db, activity, current_user_id) if is_registered else 0
     my_points = my_steps // 100
     my_rank = get_activity_rank(db, activity, current_user_id, my_steps) if is_registered else None
@@ -156,6 +192,7 @@ def serialize_activity(db: Session, activity: Activity, current_user_id: int) ->
         signupStart=format_date(activity.signup_start),
         signupEnd=format_date(activity.signup_end),
         targetGroup=activity.target_group,
+        scopeDepartmentIds=scope_department_ids,
         participants=max(activity.participants or 0, int(participant_count)),
         maxParticipants=activity.max_participants,
         isRegistered=is_registered,
@@ -249,6 +286,7 @@ async def join_activity(
     status_key, _ = current_activity_status(activity)
     if status_key != "signup":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="只有报名中的活动可以报名")
+    validate_activity_scope(db, activity, current_user)
 
     exists = db.query(ActivityParticipant.id).filter(
         ActivityParticipant.activity_id == activity_id,

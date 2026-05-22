@@ -66,6 +66,7 @@ def ensure_admin_tables() -> None:
     inspector = inspect(engine)
     columns = {item["name"] for item in inspector.get_columns("activities")}
     additions = {
+        "scope_department_ids_json": "ALTER TABLE activities ADD COLUMN scope_department_ids_json TEXT NULL COMMENT 'Activity scope department IDs JSON'",
         "poster_url": "ALTER TABLE activities ADD COLUMN poster_url VARCHAR(500) NULL COMMENT '活动海报'",
         "scope_text": "ALTER TABLE activities ADD COLUMN scope_text VARCHAR(200) NULL COMMENT '活动范围'",
         "score_rule_json": "ALTER TABLE activities ADD COLUMN score_rule_json TEXT NULL COMMENT '积分规则JSON'",
@@ -87,6 +88,9 @@ def ensure_admin_tables() -> None:
     if "image_url" not in activity_prize_columns:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE activity_prizes ADD COLUMN image_url VARCHAR(500) NULL COMMENT '活动奖品展示图片'"))
+    if "award_rule_type" not in activity_prize_columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE activity_prizes ADD COLUMN award_rule_type VARCHAR(50) NULL COMMENT 'Bound award rule type'"))
 
     _tables_ready = True
 
@@ -107,6 +111,36 @@ def loads(raw, fallback):
 
 def dumps(value) -> str:
     return json.dumps(value, ensure_ascii=False)
+
+
+def normalize_scope_department_ids(value) -> list[int]:
+    if not value:
+        return []
+    if isinstance(value, str):
+        value = loads(value, [])
+    if not isinstance(value, list):
+        return []
+    result = []
+    for item in value:
+        try:
+            department_id = int(item)
+        except (TypeError, ValueError):
+            continue
+        if department_id > 0 and department_id not in result:
+            result.append(department_id)
+    return result
+
+
+def resolve_scope_departments(db: Session, department_ids: list[int]) -> list[Department]:
+    ids = normalize_scope_department_ids(department_ids)
+    if not ids:
+        return []
+    rows = db.query(Department).filter(Department.id.in_(ids)).all()
+    found_ids = {int(row.id) for row in rows}
+    missing_ids = [item for item in ids if item not in found_ids]
+    if missing_ids:
+        raise HTTPException(status_code=422, detail="活动范围包含不存在的部门")
+    return sorted(rows, key=lambda item: ids.index(int(item.id)))
 
 
 def normalize_stored_image_url(value: str | None) -> str:
@@ -252,9 +286,16 @@ def validate_rules(payload) -> None:
         if rule.type in award_types:
             raise HTTPException(status_code=422, detail="不能重复配置同一种获奖规则")
         award_types.append(rule.type)
+        if rule.ruleRole and rule.ruleRole not in {"award", "prerequisite", "completion"}:
+            raise HTTPException(status_code=422, detail="获奖规则用途无效")
         if rule.type != "participation" and (rule.value is None or rule.value <= 0):
             raise HTTPException(status_code=422, detail=f"{AWARD_RULE_LABELS[rule.type]}规则数值必须大于 0")
     for prize in payload.prizes:
+        if prize.awardRuleType:
+            if prize.awardRuleType not in AWARD_RULE_LABELS:
+                raise HTTPException(status_code=422, detail="奖品绑定了无效的获奖规则")
+            if prize.awardRuleType not in award_types:
+                raise HTTPException(status_code=422, detail="奖品绑定的获奖规则未配置")
         if prize.quantity is not None and prize.quantity <= 0:
             raise HTTPException(status_code=422, detail="奖品数量必须大于 0")
 
@@ -326,6 +367,7 @@ def normalize_award_rules(raw) -> list[dict]:
             "type": rule_type,
             "label": label,
             "desc": item.get("desc") or "",
+            "ruleRole": item.get("ruleRole"),
             "value": item.get("value"),
         })
     return rules
@@ -363,15 +405,19 @@ def serialize_prizes(prizes: list[dict]) -> list[dict]:
     result = []
     for index, prize in enumerate(prizes):
         name = (prize.get("name") or f"活动奖品{index + 1}").strip()
+        award_rule_type = prize.get("awardRuleType") or prize.get("award_rule_type")
         item = {
             "id": prize.get("id") or f"p{index + 1}",
-            "rank": prize.get("rank") or f"奖品{index + 1}",
+            "rank": prize.get("rank") or AWARD_RULE_LABELS.get(award_rule_type, f"奖品{index + 1}"),
             "name": name,
             "image": normalize_stored_image_url(prize.get("image")) or "/images/prizes/medal.svg",
             "quantity": prize.get("quantity"),
         }
         if prize.get("prize_id") is not None:
             item["prize_id"] = prize.get("prize_id")
+        if award_rule_type:
+            item["awardRuleType"] = award_rule_type
+            item["award_rule_type"] = award_rule_type
         result.append(item)
     return result
 
@@ -380,6 +426,7 @@ def serialize_activity(db: Session, activity: Activity, role: str) -> AdminActiv
     status_key, status_text = activity_status(activity)
     count = participant_count(db, activity.id)
     max_participants = activity.max_participants or None
+    scope_department_ids = normalize_scope_department_ids(activity.scope_department_ids_json)
     return AdminActivityItem(
         id=activity.id,
         name=activity.name,
@@ -392,6 +439,7 @@ def serialize_activity(db: Session, activity: Activity, role: str) -> AdminActiv
         activityStartTime=activity.start_date,
         activityEndTime=activity.end_date,
         scopeText=activity.scope_text or activity.target_group or "",
+        scopeDepartmentIds=scope_department_ids,
         currentParticipants=count,
         maxParticipants=max_participants,
         scoreRule=normalize_score_rules(loads(activity.score_rule_json, [])),
@@ -420,6 +468,8 @@ def apply_payload(activity: Activity, payload, include_dates: bool) -> None:
     if payload.scopeText is not None:
         activity.scope_text = payload.scopeText.strip()
         activity.target_group = payload.scopeText.strip() or "全体学生"
+    if payload.scopeDepartmentIds is not None:
+        activity.scope_department_ids_json = dumps(normalize_scope_department_ids(payload.scopeDepartmentIds))
     if payload.maxParticipants is not None:
         activity.max_participants = payload.maxParticipants or 0
     elif hasattr(payload, "maxParticipants"):
@@ -447,15 +497,6 @@ def apply_payload(activity: Activity, payload, include_dates: bool) -> None:
 async def list_departments(db: Session = Depends(get_db), authorization: str = Header(None)):
     get_current_user_sync(authorization, db)
     rows = db.query(Department).order_by(Department.sort_order.asc(), Department.id.asc()).all()
-    if not rows:
-        return {
-            "items": [
-                {"id": 0, "name": "全校学生"},
-                {"id": -1, "name": "计算机科学学院"},
-                {"id": -2, "name": "软件学院"},
-                {"id": -3, "name": "网络空间安全学院"},
-            ]
-        }
     return {"items": [{"id": row.id, "name": row.name} for row in rows]}
 
 
@@ -570,6 +611,9 @@ async def create_activity(payload: AdminActivityCreate, db: Session = Depends(ge
         raise HTTPException(status_code=422, detail="活动名称必填")
     if not payload.description.strip():
         raise HTTPException(status_code=422, detail="活动描述必填")
+
+    scope_departments = resolve_scope_departments(db, payload.scopeDepartmentIds)
+    payload.scopeText = " / ".join(item.name for item in scope_departments) if scope_departments else "所有人都可报名参加"
 
     activity_id = f"admin-{uuid4().hex[:12]}"
     activity = Activity(

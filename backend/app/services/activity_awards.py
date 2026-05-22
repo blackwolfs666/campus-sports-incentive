@@ -1,5 +1,6 @@
 from datetime import date, datetime
 import json
+import random
 import re
 from typing import Any
 
@@ -35,6 +36,9 @@ def ensure_activity_prizes_table(db: Session) -> None:
     columns = {item["name"] for item in inspector.get_columns("activity_prizes")}
     if "image_url" not in columns:
         db.execute(text("ALTER TABLE activity_prizes ADD COLUMN image_url VARCHAR(500) NULL COMMENT '活动奖品展示图片'"))
+        db.flush()
+    if "award_rule_type" not in columns:
+        db.execute(text("ALTER TABLE activity_prizes ADD COLUMN award_rule_type VARCHAR(50) NULL COMMENT 'Bound award rule type'"))
         db.flush()
 
 
@@ -138,6 +142,9 @@ def serialize_activity_prize_row(row: ActivityPrize, prize: Prize, index: int) -
         "prize_type": prize.prize_type.value if hasattr(prize.prize_type, "value") else str(prize.prize_type),
         "sort_order": row.sort_order,
     }
+    if row.award_rule_type:
+        item["award_rule_type"] = row.award_rule_type
+        item["awardRuleType"] = row.award_rule_type
     if row.quantity is not None:
         item["quantity"] = row.quantity
     if row.rank_start is not None:
@@ -197,6 +204,10 @@ def ensure_activity_prize_mappings(db: Session, activity: Activity, persist: boo
             "image_url": prize.image_url or image,
             "prize_type": prize.prize_type.value if hasattr(prize.prize_type, "value") else str(prize.prize_type),
         }
+        award_rule_type = item.get("awardRuleType") or item.get("award_rule_type")
+        if award_rule_type:
+            mapped["awardRuleType"] = award_rule_type
+            mapped["award_rule_type"] = award_rule_type
         if quantity is not None:
             mapped["quantity"] = quantity
         rank_range = parse_rank_range(rank)
@@ -207,6 +218,7 @@ def ensure_activity_prize_mappings(db: Session, activity: Activity, persist: boo
             rank_start=rank_range[0] if rank_range else None,
             rank_end=rank_range[1] if rank_range else None,
             quantity=quantity,
+            award_rule_type=award_rule_type,
             image_url=image,
             sort_order=index + 1,
         ))
@@ -236,6 +248,15 @@ def get_daily_step_target(activity: Activity) -> int:
 def get_award_rules(activity: Activity) -> list[dict]:
     rules = loads(activity.award_rules_json, [])
     return [item for item in rules if isinstance(item, dict)]
+
+
+def award_rule_role(rule: dict, prize_rule_types: set[str] | None = None) -> str:
+    role = str(rule.get("ruleRole") or "").strip()
+    if role in {"award", "prerequisite", "completion"}:
+        return role
+    if prize_rule_types and rule.get("type") in prize_rule_types:
+        return "award"
+    return "prerequisite"
 
 
 def get_max_winners(activity: Activity, prize_configs: list[dict]) -> int:
@@ -378,6 +399,86 @@ def is_eligible(row: dict, activity: Activity) -> bool:
     return False
 
 
+def prize_award_rule_type(prize_config: dict) -> str:
+    return str(prize_config.get("awardRuleType") or prize_config.get("award_rule_type") or "").strip()
+
+
+def prize_quantity(prize_config: dict) -> int:
+    rank_range = parse_rank_range(prize_config.get("rank"))
+    if rank_range:
+        return max(1, rank_range[1] - rank_range[0] + 1)
+    return max(1, to_int(prize_config.get("quantity"), 1) or 1)
+
+
+def ranked_for_award_rule(ranked: list[dict], rule: dict) -> list[dict]:
+    rule_type = rule.get("type")
+    value = to_int(rule.get("value"), 0) or 0
+
+    if rule_type == "score_rank":
+        rows = sorted(ranked, key=lambda item: (item["points"], item["total_steps"]), reverse=True)
+        return [{**item, "award_rank": index} for index, item in enumerate(rows, 1) if not value or index <= value]
+    if rule_type == "steps_rank":
+        rows = sorted(ranked, key=lambda item: (item["total_steps"], item["points"]), reverse=True)
+        return [{**item, "award_rank": index} for index, item in enumerate(rows, 1) if not value or index <= value]
+    if rule_type == "target_days":
+        return [item for item in ranked if item["valid_days"] >= value]
+    if rule_type == "streak_days":
+        return [item for item in ranked if item["streak_days"] >= value]
+    if rule_type == "checkin_post_days":
+        return [item for item in ranked if item["checkin_post_days"] >= value]
+    if rule_type == "participation":
+        return ranked
+    return []
+
+
+def apply_prerequisite_rules(ranked: list[dict], rules: list[dict]) -> list[dict]:
+    rows = ranked
+    for rule in rules:
+        eligible_ids = {item["user_id"] for item in ranked_for_award_rule(rows, rule)}
+        rows = [item for item in rows if item["user_id"] in eligible_ids]
+    return rows
+
+
+def select_bound_award_winners(activity: Activity, ranked: list[dict], prize_configs: list[dict]) -> tuple[list[dict], int]:
+    rules = [rule for rule in get_award_rules(activity) if rule.get("type")]
+    rules_by_type = {rule.get("type"): rule for rule in rules}
+    prize_rule_types = {prize_award_rule_type(item) for item in prize_configs if prize_award_rule_type(item)}
+    prerequisite_rules = [rule for rule in rules if award_rule_role(rule, prize_rule_types) == "prerequisite"]
+    base_rows = apply_prerequisite_rules(ranked, prerequisite_rules)
+    selected = []
+    skipped = 0
+
+    for prize_config in prize_configs:
+        rule_type = prize_award_rule_type(prize_config)
+        rule = rules_by_type.get(rule_type)
+        prize_id = to_int(prize_config.get("prize_id"))
+        if not rule or not prize_id:
+            skipped += 1
+            continue
+
+        candidates = ranked_for_award_rule(base_rows, rule)
+        if rule_type == "participation":
+            max_participants = to_int(activity.max_participants, 0) or 0
+            remaining = max_participants if max_participants > 0 else len(candidates)
+        elif rule_type in {"score_rank", "steps_rank"}:
+            remaining = to_int(rule.get("value"), 0) or len(candidates)
+        else:
+            remaining = prize_quantity(prize_config)
+            rng = random.Random(f"{activity.id}:{rule_type}:{prize_id}")
+            candidates = list(candidates)
+            rng.shuffle(candidates)
+
+        for row in candidates:
+            selected.append({
+                "row": row,
+                "prize_config": prize_config,
+            })
+            remaining -= 1
+            if remaining <= 0:
+                break
+    return selected, skipped
+
+
 def prize_for_rank(rank: int, prize_configs: list[dict]) -> dict | None:
     cursor = 1
     fallback = None
@@ -407,15 +508,23 @@ def ensure_activity_winners(db: Session, activity: Activity) -> dict:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="活动未配置奖品，不能生成获奖记录")
 
     period = get_or_create_activity_period(db, activity)
-    max_winners = get_max_winners(activity, prize_configs)
-    ranked = [item for item in get_ranked_participants(db, activity) if is_eligible(item, activity)]
-    selected = ranked[:max_winners]
+    ranked = get_ranked_participants(db, activity)
+    if any(prize_award_rule_type(item) for item in prize_configs):
+        selected, skipped = select_bound_award_winners(activity, ranked, prize_configs)
+    else:
+        max_winners = get_max_winners(activity, prize_configs)
+        selected = [
+            {"row": item, "prize_config": prize_for_rank(item["rank"], prize_configs)}
+            for item in ranked
+            if is_eligible(item, activity)
+        ][:max_winners]
+        skipped = 0
 
     created = 0
     updated = 0
-    skipped = 0
-    for item in selected:
-        prize_config = prize_for_rank(item["rank"], prize_configs)
+    for selected_item in selected:
+        item = selected_item["row"]
+        prize_config = selected_item.get("prize_config")
         prize_id = to_int(prize_config.get("prize_id")) if prize_config else None
         if not prize_id:
             skipped += 1
@@ -428,7 +537,7 @@ def ensure_activity_winners(db: Session, activity: Activity) -> dict:
         ).first()
         if winner:
             winner.activity_id = activity.id
-            winner.rank = item["rank"]
+            winner.rank = item.get("award_rank") or item["rank"]
             winner.steps = item["total_steps"]
             updated += 1
         else:
@@ -437,7 +546,7 @@ def ensure_activity_winners(db: Session, activity: Activity) -> dict:
                 activity_id=activity.id,
                 prize_id=prize_id,
                 period_id=period.id,
-                rank=item["rank"],
+                rank=item.get("award_rank") or item["rank"],
                 steps=item["total_steps"],
                 status=WinnerStatus.pending,
             ))

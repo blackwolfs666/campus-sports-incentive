@@ -8,11 +8,13 @@ const emptyForm = {
   registerEndTime: '',
   activityStartTime: '',
   activityEndTime: '',
+  scopeMode: 'all',
   scopeText: '',
+  scopeDepartmentIds: [],
   maxParticipants: '',
   scoreRule: [],
   awardRules: [],
-  prizes: [{ name: '', quantity: '', image: '' }]
+  prizes: []
 }
 
 function clone(value) {
@@ -31,6 +33,10 @@ function normalizePrize(prize) {
     quantity: prize.quantity || '',
     image: prize.image || ''
   }
+}
+
+function emptyPrize() {
+  return { name: '', quantity: '', image: '' }
 }
 
 const scoreRuleOptions = [
@@ -114,6 +120,45 @@ function awardRuleNeedValue(type) {
   return option ? option.needValue : true
 }
 
+function isFixedPrizeQuantityRule(type) {
+  return ['participation', 'score_rank', 'steps_rank'].includes(type)
+}
+
+function isRandomPrizeQuantityRule(type) {
+  return ['target_days', 'streak_days', 'checkin_post_days'].includes(type)
+}
+
+function normalizeRuleRole(rule, hasPrize = false) {
+  if (['award', 'prerequisite', 'completion'].includes(rule.ruleRole)) return rule.ruleRole
+  if (rule.prizeMode === 'configured' || hasPrize) return 'award'
+  return 'prerequisite'
+}
+
+function prizeQuantityText(rule, maxParticipants, enableMaxParticipants) {
+  if (rule.type === 'participation') {
+    return enableMaxParticipants && maxParticipants ? `奖品数量：${maxParticipants}` : '奖品数量：无上限'
+  }
+  if (rule.type === 'score_rank' || rule.type === 'steps_rank') {
+    return rule.value ? `奖品数量：${rule.value}` : '奖品数量：按前 X 名'
+  }
+  return ''
+}
+
+function normalizeAwardRulePrizeState(rule, maxParticipants = '', enableMaxParticipants = false) {
+  const prize = normalizePrize(rule.prize || {})
+  const fixedQuantityText = prizeQuantityText(rule, maxParticipants, enableMaxParticipants)
+  const ruleRole = normalizeRuleRole(rule)
+  return {
+    ...rule,
+    ruleRole,
+    prizeMode: ruleRole === 'award' ? 'configured' : 'none',
+    prize,
+    prizeQuantityReadonly: ruleRole === 'award' && isFixedPrizeQuantityRule(rule.type),
+    prizeQuantityText: fixedQuantityText,
+    prizeQuantityManual: ruleRole === 'award' && isRandomPrizeQuantityRule(rule.type)
+  }
+}
+
 function normalizeAwardRules(raw) {
   if (!Array.isArray(raw)) return []
   return raw
@@ -128,9 +173,28 @@ function normalizeAwardRules(raw) {
         desc: item.desc || awardRuleDesc(type),
         needValue: awardRuleNeedValue(type),
         optionIndex: index,
-        value: item.value === null || item.value === undefined ? '' : String(item.value)
+        value: item.value === null || item.value === undefined ? '' : String(item.value),
+        ruleRole: normalizeRuleRole(item),
+        prizeMode: item.prizeMode === 'configured' ? 'configured' : 'none',
+        prize: normalizePrize(item.prize || {})
       }
     })
+}
+
+function mergeAwardRulesWithPrizes(awardRules, prizes, maxParticipants = '', enableMaxParticipants = false) {
+  const prizeByRule = {}
+  ;(prizes || []).forEach(item => {
+    const ruleType = item && (item.awardRuleType || item.award_rule_type)
+    if (ruleType && !prizeByRule[ruleType]) {
+      prizeByRule[ruleType] = normalizePrize(item)
+    }
+  })
+  return (awardRules || []).map(rule => normalizeAwardRulePrizeState({
+    ...rule,
+    ruleRole: normalizeRuleRole(rule, Boolean(prizeByRule[rule.type])),
+    prizeMode: prizeByRule[rule.type] ? 'configured' : rule.prizeMode,
+    prize: prizeByRule[rule.type] || rule.prize
+  }, maxParticipants, enableMaxParticipants))
 }
 
 function hasDuplicateAwardRule(rules) {
@@ -297,40 +361,37 @@ Page({
     app.request({
       url: '/admin/departments'
     }).then((res) => {
-      const items = Array.isArray(res.items) ? res.items : []
+      const items = Array.isArray(res.items) ? res.items.filter(item => Number(item.id) > 0) : []
       const departments = items.map(item => ({
         id: item.id,
         name: item.name,
         selected: false
       }))
       this.setData({
-        departments: this.markSelectedDepartments(departments, this.data.form.scopeText)
+        departments: this.markSelectedDepartments(departments, this.data.form.scopeDepartmentIds, this.data.form.scopeText)
       })
     }).catch((err) => {
       console.error('获取部门列表失败', err)
-      this.setData({
-        departments: this.markSelectedDepartments([
-          { id: 0, name: '全校学生', selected: false },
-          { id: -1, name: '计算机科学学院', selected: false },
-          { id: -2, name: '软件学院', selected: false },
-          { id: -3, name: '网络空间安全学院', selected: false }
-        ], this.data.form.scopeText)
-      })
+      this.setData({ departments: [] })
     })
   },
 
-  markSelectedDepartments(departments, scopeText) {
+  markSelectedDepartments(departments, scopeDepartmentIds = [], scopeText = '') {
+    const selectedIds = (Array.isArray(scopeDepartmentIds) ? scopeDepartmentIds : []).map(item => Number(item)).filter(item => item > 0)
     const selectedNames = splitScopeText(scopeText)
-    return departments.map(item => ({
+    return departments.filter(item => Number(item.id) > 0).map(item => ({
       ...item,
-      selected: selectedNames.includes(item.name)
+      selected: selectedIds.includes(Number(item.id)) || selectedNames.includes(item.name)
     }))
   },
 
   syncScopeFromDepartments(departments) {
-    const selectedNames = departments.filter(item => item.selected).map(item => item.name)
+    const selectedDepartments = departments.filter(item => item.selected && Number(item.id) > 0)
+    const selectedNames = selectedDepartments.map(item => item.name)
+    const selectedIds = selectedDepartments.map(item => Number(item.id))
     this.setData({
       departments,
+      'form.scopeDepartmentIds': selectedIds,
       'form.scopeText': selectedNames.join('、')
     })
   },
@@ -340,6 +401,7 @@ Page({
     app.request({
       url: `/admin/activities/${this.data.id}`
     }).then((activity) => {
+      const scopeDepartmentIds = activity.scopeDepartmentIds || []
       const form = {
         ...clone(emptyForm),
         name: activity.name || '',
@@ -349,15 +411,25 @@ Page({
         registerEndTime: normalizeDateTime(activity.registerEndTime),
         activityStartTime: normalizeDateTime(activity.activityStartTime),
         activityEndTime: normalizeDateTime(activity.activityEndTime),
-        scopeText: activity.scopeText || '',
+        scopeMode: scopeDepartmentIds.length ? 'limited' : 'all',
+        scopeText: scopeDepartmentIds.length ? (activity.scopeText || '') : '',
+        scopeDepartmentIds,
         maxParticipants: activity.maxParticipants || '',
         scoreRule: normalizeScoreRules(activity.scoreRule),
         awardRules: normalizeAwardRules(activity.awardRules),
-        prizes: (activity.prizes || []).length ? activity.prizes.map(normalizePrize).map(item => ({
-          ...item,
-          image: normalizeImageUrl(item.image)
-        })) : [{ name: '', quantity: '', image: '' }]
+        prizes: []
       }
+      const activityPrizes = (activity.prizes || []).map(item => ({
+        ...normalizePrize(item),
+        awardRuleType: item.awardRuleType || item.award_rule_type || '',
+        image: normalizeImageUrl(item.image)
+      }))
+      form.awardRules = mergeAwardRulesWithPrizes(
+        form.awardRules,
+        activityPrizes,
+        form.maxParticipants,
+        activity.maxParticipants !== null && activity.maxParticipants !== undefined && activity.maxParticipants !== ''
+      )
       const readonly = this.data.readonly || !activity.canEdit
       const canEditBasic = !readonly && activity.status !== 'ended'
       const canEditFull = !this.data.isEdit
@@ -374,7 +446,7 @@ Page({
         canEditMax,
         originalMaxParticipants,
         enableMaxParticipants: activity.maxParticipants !== null && activity.maxParticipants !== undefined && activity.maxParticipants !== '',
-        departments: this.markSelectedDepartments(this.data.departments, form.scopeText)
+        departments: this.markSelectedDepartments(this.data.departments, form.scopeDepartmentIds, form.scopeText)
       })
     }).catch((err) => {
       console.error('获取活动详情失败', err)
@@ -385,6 +457,9 @@ Page({
   onInput(e) {
     const field = e.currentTarget.dataset.field
     this.setData({ [`form.${field}`]: e.detail.value })
+    if (field === 'maxParticipants') {
+      this.refreshAwardRuleBindings(this.data.form.awardRules, e.detail.value, this.data.enableMaxParticipants)
+    }
   },
 
   onNestedInput(e) {
@@ -455,10 +530,12 @@ Page({
       wx.showToast({ title: '原活动未设置人数上限，不能改为设置上限', icon: 'none' })
       return
     }
+    const nextMaxParticipants = next ? (this.data.form.maxParticipants || (original > 0 ? String(original) : '100')) : ''
     this.setData({
       enableMaxParticipants: next,
-      'form.maxParticipants': next ? (this.data.form.maxParticipants || (original > 0 ? String(original) : '100')) : ''
+      'form.maxParticipants': nextMaxParticipants
     })
+    this.refreshAwardRuleBindings(this.data.form.awardRules, nextMaxParticipants, next)
   },
 
   stepMaxParticipants(e) {
@@ -473,20 +550,42 @@ Page({
       wx.showToast({ title: `不能低于原设置的 ${min} 人`, icon: 'none' })
     }
     this.setData({ 'form.maxParticipants': String(next) })
+    this.refreshAwardRuleBindings(this.data.form.awardRules, String(next), this.data.enableMaxParticipants)
   },
 
   toggleDepartmentPicker() {
-    if (!this.data.canEditFull) return
+    if (!this.data.canEditFull || this.data.form.scopeMode !== 'limited') return
     this.setData({ showDepartmentPicker: !this.data.showDepartmentPicker })
   },
 
   toggleDepartment(e) {
-    if (!this.data.canEditFull) return
+    if (!this.data.canEditFull || this.data.form.scopeMode !== 'limited') return
     const index = Number(e.currentTarget.dataset.index)
     const departments = this.data.departments.map((item, idx) => (
       idx === index ? { ...item, selected: !item.selected } : item
     ))
     this.syncScopeFromDepartments(departments)
+  },
+
+  switchScopeMode(e) {
+    if (!this.data.canEditFull) return
+    const mode = e.currentTarget.dataset.mode === 'limited' ? 'limited' : 'all'
+    if (mode === this.data.form.scopeMode) return
+    if (mode === 'all') {
+      const departments = this.data.departments.map(item => ({ ...item, selected: false }))
+      this.setData({
+        departments,
+        showDepartmentPicker: false,
+        'form.scopeMode': 'all',
+        'form.scopeText': '',
+        'form.scopeDepartmentIds': []
+      })
+      return
+    }
+    this.setData({
+      showDepartmentPicker: true,
+      'form.scopeMode': 'limited'
+    })
   },
 
   choosePoster() {
@@ -599,7 +698,7 @@ Page({
   choosePrizeImage(e) {
     if (!this.data.canEditFull) return
     const index = Number(e.currentTarget.dataset.index)
-    const prize = this.data.form.prizes[index]
+    const prize = this.data.form.awardRules[index] && this.data.form.awardRules[index].prize
     if (!prize) return
     if (prize.image) {
       wx.showModal({
@@ -643,19 +742,19 @@ Page({
 
   uploadPrizeImageFile(index, filePath) {
     this.uploadImageFile(filePath, (url) => {
-      this.setData({ [`form.prizes[${index}].image`]: url })
+      this.setData({ [`form.awardRules[${index}].prize.image`]: url })
     })
   },
 
   removePrizeImage(e) {
     if (!this.data.canEditFull) return
     const index = Number(e.currentTarget.dataset.index)
-    this.setData({ [`form.prizes[${index}].image`]: '' })
+    this.setData({ [`form.awardRules[${index}].prize.image`]: '' })
   },
 
   previewPrizeImage(e) {
     const index = Number(e.currentTarget.dataset.index)
-    const image = this.data.form.prizes[index] && this.data.form.prizes[index].image
+    const image = this.data.form.awardRules[index] && this.data.form.awardRules[index].prize && this.data.form.awardRules[index].prize.image
     if (!image) return
     wx.previewImage({
       urls: [image],
@@ -714,6 +813,12 @@ Page({
     })
   },
 
+  refreshAwardRuleBindings(awardRules, maxParticipants = this.data.form.maxParticipants, enableMaxParticipants = this.data.enableMaxParticipants) {
+    this.setData({
+      'form.awardRules': mergeAwardRulesWithPrizes(awardRules, [], maxParticipants, enableMaxParticipants)
+    })
+  },
+
   addAwardRule() {
     if (!this.data.canEditFull) return
     const usedTypes = this.data.form.awardRules.map(item => item.type)
@@ -722,16 +827,17 @@ Page({
       wx.showToast({ title: '已添加全部规则类型', icon: 'none' })
       return
     }
-    this.setData({
-      'form.awardRules': this.data.form.awardRules.concat([{
-        type: nextType.type,
-        label: nextType.label,
-        desc: nextType.desc,
-        needValue: nextType.needValue,
-        optionIndex: this.data.awardRuleOptions.findIndex(item => item.type === nextType.type),
-        value: ''
-      }])
-    })
+    this.refreshAwardRuleBindings(this.data.form.awardRules.concat([{
+      type: nextType.type,
+      label: nextType.label,
+      desc: nextType.desc,
+      needValue: nextType.needValue,
+      optionIndex: this.data.awardRuleOptions.findIndex(item => item.type === nextType.type),
+      value: '',
+      ruleRole: 'award',
+      prizeMode: 'configured',
+      prize: emptyPrize()
+    }]))
   },
 
   onAwardRuleTypeChange(e) {
@@ -747,47 +853,50 @@ Page({
       wx.showToast({ title: '不能重复添加同种获奖规则', icon: 'none' })
       return
     }
-    this.setData({ 'form.awardRules': rules })
+    this.refreshAwardRuleBindings(rules)
   },
 
   onAwardRuleInput(e) {
     const index = Number(e.currentTarget.dataset.index)
-    this.setData({ [`form.awardRules[${index}].value`]: e.detail.value })
+    const rules = this.data.form.awardRules.map((item, idx) => (
+      idx === index ? { ...item, value: e.detail.value } : item
+    ))
+    this.refreshAwardRuleBindings(rules)
   },
 
   removeAwardRule(e) {
     if (!this.data.canEditFull) return
     const index = Number(e.currentTarget.dataset.index)
-    this.setData({
-      'form.awardRules': this.data.form.awardRules.filter((_, idx) => idx !== index)
-    })
+    this.refreshAwardRuleBindings(this.data.form.awardRules.filter((_, idx) => idx !== index))
+  },
+
+  setAwardRuleRole(e) {
+    if (!this.data.canEditFull) return
+    const index = Number(e.currentTarget.dataset.index)
+    const role = ['award', 'prerequisite', 'completion'].includes(e.currentTarget.dataset.role)
+      ? e.currentTarget.dataset.role
+      : 'prerequisite'
+    const rules = this.data.form.awardRules.map((item, idx) => (
+      idx === index ? { ...item, ruleRole: role, prizeMode: role === 'award' ? 'configured' : 'none', prize: item.prize || emptyPrize() } : item
+    ))
+    this.refreshAwardRuleBindings(rules)
   },
 
   onPrizeInput(e) {
     const index = Number(e.currentTarget.dataset.index)
     const field = e.currentTarget.dataset.field
-    this.setData({ [`form.prizes[${index}].${field}`]: e.detail.value })
+    this.setData({ [`form.awardRules[${index}].prize.${field}`]: e.detail.value })
   },
 
   stepPrizeQuantity(e) {
     if (!this.data.canEditFull) return
     const index = Number(e.currentTarget.dataset.index)
+    const rule = this.data.form.awardRules[index]
+    if (!rule || !rule.prizeQuantityManual) return
     const delta = Number(e.currentTarget.dataset.delta)
-    const current = Number(this.data.form.prizes[index]?.quantity || 0)
+    const current = Number(rule.prize?.quantity || 0)
     const next = Math.max(1, current + delta)
-    this.setData({ [`form.prizes[${index}].quantity`]: String(next) })
-  },
-
-  addPrize() {
-    if (!this.data.canEditFull) return
-    this.setData({ 'form.prizes': this.data.form.prizes.concat([{ name: '', quantity: '', image: '' }]) })
-  },
-
-  removePrize(e) {
-    if (!this.data.canEditFull || this.data.form.prizes.length <= 1) return
-    const index = Number(e.currentTarget.dataset.index)
-    const prizes = this.data.form.prizes.filter((_, idx) => idx !== index)
-    this.setData({ 'form.prizes': prizes.length ? prizes : [{ name: '', quantity: '', image: '' }] })
+    this.setData({ [`form.awardRules[${index}].prize.quantity`]: String(next) })
   },
 
   buildPayload() {
@@ -801,12 +910,14 @@ Page({
     }
 
     if (!this.data.isEdit) {
+      const isLimitedScope = form.scopeMode === 'limited'
       Object.assign(payload, {
         registerStartTime: form.registerStartTime,
         registerEndTime: form.registerEndTime,
         activityStartTime: form.activityStartTime,
         activityEndTime: form.activityEndTime,
-        scopeText: form.scopeText.trim(),
+        scopeText: isLimitedScope ? form.scopeText.trim() : '',
+        scopeDepartmentIds: isLimitedScope ? (form.scopeDepartmentIds || []) : [],
         scoreRule: form.scoreRule.map(item => ({
           type: item.type,
           label: item.label || scoreRuleLabel(item.type),
@@ -819,13 +930,18 @@ Page({
           type: item.type,
           label: item.label || awardRuleLabel(item.type),
           desc: item.desc || awardRuleDesc(item.type),
+          ruleRole: item.ruleRole || 'prerequisite',
           value: item.needValue === false ? null : toNumberOrNull(item.value)
         })).filter(item => item.type),
-        prizes: form.prizes
+        prizes: form.awardRules
+          .filter(item => item.type && item.ruleRole === 'award')
           .map(item => ({
-            name: (item.name || '').trim(),
-            quantity: toNumberOrNull(item.quantity),
-            image: toStorageImageUrl(item.image)
+            name: (item.prize?.name || '').trim(),
+            quantity: item.type === 'participation'
+              ? (this.data.enableMaxParticipants ? toNumberOrNull(form.maxParticipants) : null)
+              : (item.type === 'score_rank' || item.type === 'steps_rank' ? toNumberOrNull(item.value) : toNumberOrNull(item.prize?.quantity)),
+            awardRuleType: item.type,
+            image: toStorageImageUrl(item.prize?.image)
           }))
           .filter(item => item.name)
       })
@@ -847,7 +963,7 @@ Page({
     if (!this.data.isEdit) {
       const dateMessage = getDateOrderError(payload, true)
       if (dateMessage) return dateMessage
-      if (!payload.scopeText) return '请选择活动范围'
+      if (this.data.form.scopeMode === 'limited' && (!payload.scopeDepartmentIds || payload.scopeDepartmentIds.length === 0)) return '请选择限定报名部门'
       if (hasDuplicateScoreRule(payload.scoreRule)) return '不能重复配置同一种积分规则'
       for (const rule of payload.scoreRule) {
         if (!rule.type) return '请选择积分规则类型'
@@ -863,6 +979,13 @@ Page({
         if (!rule.type) return '请选择获奖规则类型'
         if (awardRuleNeedValue(rule.type) && (!rule.value || rule.value <= 0)) {
           return `请填写有效的${rule.label || '获奖规则数值'}`
+        }
+      }
+      for (const rule of this.data.form.awardRules) {
+        if (rule.ruleRole !== 'award') continue
+        if (!rule.prize || !String(rule.prize.name || '').trim()) return '请填写奖品名称'
+        if (rule.prizeQuantityManual && (!toNumberOrNull(rule.prize.quantity) || toNumberOrNull(rule.prize.quantity) <= 0)) {
+          return '请填写有效的奖品数量'
         }
       }
     }

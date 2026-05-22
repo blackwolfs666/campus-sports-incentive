@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_USER: str = "root"
-    DB_PASSWORD: str = "62461253"
+    DB_PASSWORD: str = ""
     DB_NAME: str = "step_counter"
     
     # 微信小程序配置
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     DEV_WECHAT_OPENID: str = "test_openid_7"
     
     # JWT配置
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    SECRET_KEY: str = "change-this-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7天
     
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # CAS / IDS 配置
-    CAS_SERVER_URL: str = "https://ids.cqupt.edu.cn/authserver/"
+    CAS_SERVER_URL: str = ""
     CAS_SERVICE_URL: str = "http://127.0.0.1:8001/api/cas/callback"
     CAS_TOKEN_EXPIRE_SECONDS: int = 300
 

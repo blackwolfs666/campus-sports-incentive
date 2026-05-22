@@ -1,32 +1,43 @@
-# 依赖文件夹
+# Dependencies
 node_modules/
 venv/
+venvs/
 .venv/
+backend/.venv/
 
-# 环境变量，不要上传账号密码
+# Local environment files
 .env
 .env.local
 *.env
+backend/.env
 
-# 日志文件
-*.log
+# WeChat Developer Tools local/private files
+project.private.config.json
+miniprogram/project.private.config.json
+app/project.private.config.json
+
+# Runtime uploads and generated files
+backend/static/uploads/
 .run/
+*.log
 
-# Python 缓存
+# Python cache
 __pycache__/
 *.pyc
 
-# 前端构建产物
+# Frontend build output
 dist/
 build/
 .next/
+app/dist/
 
-# VS Code 本地配置
+# IDE and system files
 .vscode/
-
-# 系统文件
+.idea/
 .DS_Store
 Thumbs.db
 
-# 其他临时文件
-/docs/
+# Local archives
+archives/
+docs/
+*.zip

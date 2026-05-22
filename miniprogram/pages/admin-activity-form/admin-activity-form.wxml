@@ -57,13 +57,23 @@
       <view class="field">
         <view class="label-row">
           <text>活动范围</text>
-          <text class="field-tip">可多选部门，暂未接入 CAS</text>
+          <text class="field-tip">按真实部门限制报名范围</text>
         </view>
-        <view class="scope-select {{!canEditFull ? 'disabled' : ''}}" bindtap="toggleDepartmentPicker">
-          <text class="{{form.scopeText ? 'scope-value' : 'scope-placeholder'}}">{{form.scopeText || '请选择部门，可多选'}}</text>
+        <view class="scope-mode-row {{!canEditFull ? 'disabled' : ''}}">
+          <view class="scope-mode-option {{form.scopeMode !== 'limited' ? 'selected' : ''}}" data-mode="all" bindtap="switchScopeMode">
+            <view class="scope-radio">{{form.scopeMode !== 'limited' ? '✓' : ''}}</view>
+            <text>所有人都可报名参加</text>
+          </view>
+          <view class="scope-mode-option {{form.scopeMode === 'limited' ? 'selected' : ''}}" data-mode="limited" bindtap="switchScopeMode">
+            <view class="scope-radio">{{form.scopeMode === 'limited' ? '✓' : ''}}</view>
+            <text>限定范围</text>
+          </view>
+        </view>
+        <view wx:if="{{form.scopeMode === 'limited'}}" class="scope-select {{!canEditFull ? 'disabled' : ''}}" bindtap="toggleDepartmentPicker">
+          <text class="{{form.scopeText ? 'scope-value' : 'scope-placeholder'}}">{{form.scopeText || '请选择限定部门，可多选'}}</text>
           <text class="scope-arrow">{{showDepartmentPicker ? '收起' : '选择'}}</text>
         </view>
-        <view wx:if="{{showDepartmentPicker}}" class="department-panel">
+        <view wx:if="{{form.scopeMode === 'limited' && showDepartmentPicker}}" class="department-panel">
           <view
             wx:for="{{departments}}"
             wx:key="id"
@@ -234,51 +244,73 @@
           <text>规则数值 X</text>
           <input type="number" value="{{item.value}}" data-index="{{index}}" bindinput="onAwardRuleInput" disabled="{{!canEditFull}}" placeholder="请输入大于 0 的整数" />
         </view>
-        <view class="form-btn remove {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" bindtap="removeAwardRule">删除规则</view>
-      </view>
-    </view>
-
-    <view class="form-card">
-      <view class="section-row">
-        <text class="section-title">奖品信息</text>
-        <view class="form-btn tiny {{!canEditFull ? 'disabled' : ''}}" bindtap="addPrize">新增</view>
-      </view>
-      <view class="prize-item" wx:for="{{form.prizes}}" wx:key="index">
         <view class="field">
-          <text>奖品名称</text>
-          <input value="{{item.name}}" data-index="{{index}}" data-field="name" bindinput="onPrizeInput" disabled="{{!canEditFull}}" placeholder="奖品名称" />
-        </view>
-        <view class="field">
-          <text>奖品数量</text>
-          <view class="number-stepper compact">
-            <view class="step-btn {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" data-delta="-1" bindtap="stepPrizeQuantity">-1</view>
-            <input class="step-input" type="number" inputmode="numeric" confirm-type="done" value="{{item.quantity}}" data-index="{{index}}" data-field="quantity" bindinput="onPrizeInput" disabled="{{!canEditFull}}" placeholder="数量" />
-            <view class="step-btn {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" data-delta="1" bindtap="stepPrizeQuantity">+1</view>
-          </view>
-        </view>
-        <view class="field">
-          <view class="label-row">
-            <text>奖品图片</text>
-            <text class="field-tip">只能上传 1 张</text>
-          </view>
-          <view wx:if="{{item.image}}" class="poster-card prize-image-card">
-            <image class="poster-preview prize-image-preview" src="{{item.image}}" mode="aspectFill" data-index="{{index}}" bindtap="previewPrizeImage"></image>
-            <view class="poster-info">
-              <text class="poster-title">已上传奖品图片</text>
-              <text class="poster-desc">点击图片可预览；继续上传会替换当前图片。</text>
-              <view wx:if="{{canEditFull}}" class="poster-actions">
-                <view class="poster-action primary" data-index="{{index}}" bindtap="choosePrizeImage">更换图片</view>
-                <view class="poster-action danger" data-index="{{index}}" bindtap="removePrizeImage">删除</view>
+          <text>规则用途</text>
+          <view class="rule-role-row {{!canEditFull ? 'disabled' : ''}}">
+            <view class="rule-role-option {{item.ruleRole === 'completion' ? 'selected' : ''}}" data-index="{{index}}" data-role="completion" bindtap="setAwardRuleRole">
+              <view class="scope-radio">{{item.ruleRole === 'completion' ? '✓' : ''}}</view>
+              <view>
+                <text>作为完成条件</text>
+                <text>用于活动完成统计，不发奖</text>
+              </view>
+            </view>
+            <view class="rule-role-option {{item.ruleRole === 'prerequisite' ? 'selected' : ''}}" data-index="{{index}}" data-role="prerequisite" bindtap="setAwardRuleRole">
+              <view class="scope-radio">{{item.ruleRole === 'prerequisite' ? '✓' : ''}}</view>
+              <view>
+                <text>作为资格门槛</text>
+                <text>满足后才可参与后续奖项</text>
+              </view>
+            </view>
+            <view class="rule-role-option {{item.ruleRole === 'award' ? 'selected' : ''}}" data-index="{{index}}" data-role="award" bindtap="setAwardRuleRole">
+              <view class="scope-radio">{{item.ruleRole === 'award' ? '✓' : ''}}</view>
+              <view>
+                <text>作为奖项规则</text>
+                <text>满足后发放奖品</text>
               </view>
             </view>
           </view>
-          <view wx:else class="poster-empty prize-image-empty {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" bindtap="choosePrizeImage">
-            <text class="poster-plus">+</text>
-            <text class="poster-upload-text">上传奖品图片</text>
-            <text class="poster-upload-tip">仅支持 1 张图片</text>
+        </view>
+        <view wx:if="{{item.ruleRole === 'award'}}" class="prize-item embedded">
+          <view class="field">
+            <text>奖品名称</text>
+            <input value="{{item.prize.name}}" data-index="{{index}}" data-field="name" bindinput="onPrizeInput" disabled="{{!canEditFull}}" placeholder="奖品名称" />
+          </view>
+          <view class="field">
+            <text>奖品数量</text>
+            <view wx:if="{{item.prizeQuantityReadonly}}" class="rule-select disabled">
+              <text>{{item.prizeQuantityText}}</text>
+              <text>自动</text>
+            </view>
+            <view wx:else class="number-stepper compact">
+              <view class="step-btn {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" data-delta="-1" bindtap="stepPrizeQuantity">-1</view>
+              <input class="step-input" type="number" inputmode="numeric" confirm-type="done" value="{{item.prize.quantity}}" data-index="{{index}}" data-field="quantity" bindinput="onPrizeInput" disabled="{{!canEditFull}}" placeholder="数量" />
+              <view class="step-btn {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" data-delta="1" bindtap="stepPrizeQuantity">+1</view>
+            </view>
+          </view>
+          <view class="field">
+            <view class="label-row">
+              <text>奖品图片</text>
+              <text class="field-tip">只能上传 1 张</text>
+            </view>
+            <view wx:if="{{item.prize.image}}" class="poster-card prize-image-card">
+              <image class="poster-preview prize-image-preview" src="{{item.prize.image}}" mode="aspectFill" data-index="{{index}}" bindtap="previewPrizeImage"></image>
+              <view class="poster-info">
+                <text class="poster-title">已上传奖品图片</text>
+                <text class="poster-desc">点击图片可预览；继续上传会替换当前图片。</text>
+                <view wx:if="{{canEditFull}}" class="poster-actions">
+                  <view class="poster-action primary" data-index="{{index}}" bindtap="choosePrizeImage">更换图片</view>
+                  <view class="poster-action danger" data-index="{{index}}" bindtap="removePrizeImage">删除</view>
+                </view>
+              </view>
+            </view>
+            <view wx:else class="poster-empty prize-image-empty {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" bindtap="choosePrizeImage">
+              <text class="poster-plus">+</text>
+              <text class="poster-upload-text">上传奖品图片</text>
+              <text class="poster-upload-tip">仅支持 1 张图片</text>
+            </view>
           </view>
         </view>
-        <view class="form-btn remove {{!canEditFull || form.prizes.length <= 1 ? 'disabled' : ''}}" data-index="{{index}}" bindtap="removePrize">删除奖品</view>
+        <view class="form-btn remove {{!canEditFull ? 'disabled' : ''}}" data-index="{{index}}" bindtap="removeAwardRule">删除规则</view>
       </view>
     </view>
 

@@ -99,7 +99,7 @@
         <div class="mt-4 w-full">
           <h3 class="font-bold text-on-tertiary-container">兑换说明</h3>
           <ul class="text-sm text-on-tertiary-container/80 space-y-2 leading-relaxed mt-2 text-left">
-            <li>• 请向校工会管理人员出示此二维码进行兑换。</li>
+            <li>• 请向活动方管理人员出示此二维码进行兑换。</li>
             <li>• 奖品：<span class="font-bold">{{ prize?.name }}</span></li>
             <li>• 此凭证仅限本人在工作日（8:30-17:30）使用。</li>
             <li>• 核销完成后，奖品将从您的库存中移除。</li>

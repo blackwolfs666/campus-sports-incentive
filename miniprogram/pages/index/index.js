@@ -224,6 +224,70 @@ Page({
     return String(num)
   },
 
+  promptDailyGoalReset() {
+    if (!this.hasLoginToken()) {
+      wx.showToast({ title: '请先登录后再设置目标', icon: 'none' })
+      return
+    }
+    wx.showModal({
+      title: '重新设置每日目标',
+      content: '重新设定每日目标，将中断连续达标天数',
+      confirmText: '继续设置',
+      success: (res) => {
+        if (!res.confirm) return
+        this.showDailyGoalInput()
+      }
+    })
+  },
+
+  showDailyGoalInput() {
+    wx.showModal({
+      title: '每日目标步数',
+      content: '',
+      editable: true,
+      placeholderText: String(this.data.dailyGoal || 10000),
+      confirmText: '确认设置',
+      success: (res) => {
+        if (!res.confirm) return
+        const dailyGoal = Number(String(res.content || '').trim())
+        if (!Number.isInteger(dailyGoal) || dailyGoal < 1000 || dailyGoal > 100000) {
+          wx.showToast({ title: '请输入 1000-100000 的整数', icon: 'none' })
+          return
+        }
+        this.updateDailyGoal(dailyGoal)
+      }
+    })
+  },
+
+  updateDailyGoal(dailyGoal) {
+    const app = getApp()
+    wx.showLoading({ title: '设置中...' })
+    app.request({
+      url: '/steps/daily-goal',
+      method: 'PUT',
+      data: { daily_goal: dailyGoal },
+      skipLoginRetry: true
+    }).then((res) => {
+      wx.hideLoading()
+      const nextGoal = Number(res.daily_goal || dailyGoal)
+      const remainingSteps = Math.max(nextGoal - this.data.todaySteps, 0)
+      this.setData({
+        dailyGoal: nextGoal,
+        dailyGoalText: this.formatNumber(nextGoal),
+        remainingStepsText: this.formatNumber(remainingSteps),
+        streakDays: Number(res.streak_days || 0),
+        progressPercent: Math.min(Math.round((this.data.todaySteps / nextGoal) * 100), 100),
+        calendarCells: this.buildCalendarCells(this.data.todaySteps || 0, nextGoal, this.data.stepHistoryMap, true)
+      })
+      wx.showToast({ title: '目标已更新', icon: 'success' })
+    }).catch((err) => {
+      wx.hideLoading()
+      console.error('更新每日目标失败', err)
+      const detail = err?.data?.detail || '设置失败'
+      wx.showToast({ title: Array.isArray(detail) ? '目标格式无效' : detail, icon: 'none' })
+    })
+  },
+
   fetchStepHistory(dailyGoal, todaySteps) {
     if (!this.hasLoginToken()) {
       this.resetUserScopedData()
@@ -240,7 +304,10 @@ Page({
       ;(records || []).forEach(record => {
         const dateKey = normalizeDateKey(record.record_date)
         if (dateKey) {
-          history[dateKey] = Number(record.steps || 0)
+          history[dateKey] = {
+            steps: Number(record.steps || 0),
+            targetSteps: Number(record.target_steps || record.targetSteps || dailyGoal)
+          }
         }
       })
       wx.setStorageSync(STEP_HISTORY_KEY, history)
@@ -278,8 +345,12 @@ Page({
       const isToday = day === todayDate
       const isFuture = day > todayDate
       const dateKey = `${year}-${`${month + 1}`.padStart(2, '0')}-${`${day}`.padStart(2, '0')}`
-      const steps = showUserData ? (isToday ? todaySteps : Number(history[dateKey] || 0)) : 0
-      const hitTarget = steps >= dailyGoal
+      const historyItem = history[dateKey]
+      const historySteps = typeof historyItem === 'object' ? Number(historyItem.steps || 0) : Number(historyItem || 0)
+      const historyTarget = typeof historyItem === 'object' ? Number(historyItem.targetSteps || dailyGoal) : dailyGoal
+      const steps = showUserData ? (isToday ? todaySteps : historySteps) : 0
+      const targetSteps = isToday ? dailyGoal : historyTarget
+      const hitTarget = steps >= targetSteps
       cells.push({
         key: `day-${day}`,
         day,

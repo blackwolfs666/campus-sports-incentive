@@ -3,13 +3,13 @@
 Project root:
 
 ```text
-D:\my-web\sportsNum
+<repo-root>
 ```
 
 Database scripts:
 
 ```text
-D:\my-web\sportsNum\database
+<repo-root>/database
 ```
 
 Current local MySQL settings are read by the backend from `backend/.env` or terminal environment variables.
@@ -18,17 +18,17 @@ Current local MySQL settings are read by the backend from `backend/.env` or term
 Host: localhost
 Port: 3306
 User: root
-Password: 123456
+Password: your_mysql_password
 Database: step_counter
 ```
 
 Initialization order:
 
 ```sql
-source D:/my-web/sportsNum/database/schema.sql;
-source D:/my-web/sportsNum/database/seed.sql;
-source D:/my-web/sportsNum/database/checkin_tables.sql;
-source D:/my-web/sportsNum/database/admin_tables.sql;
+source database/schema.sql;
+source database/seed.sql;
+source database/checkin_tables.sql;
+source database/admin_tables.sql;
 ```
 
 Files:

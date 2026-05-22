@@ -96,15 +96,15 @@ Page({
       skipLoginRetry: true
     }).then(res => {
       this.setData({ casStatus: res })
-      if (res.cas_binded) {
+      if (res.cas_binded || res.department_name) {
         const baseUserInfo = this.data.userInfo || app.globalData.userInfo || {}
         const userInfo = {
           ...baseUserInfo,
           name: res.name || baseUserInfo.name,
           employee_id: res.employee_id,
-          cas_binded: true,
+          cas_binded: !!res.cas_binded,
           edu_person_type: res.edu_person_type,
-          department_name: res.department_name
+          department_name: res.department_name || baseUserInfo.department_name
         }
         this.setUserInfo(userInfo)
       }

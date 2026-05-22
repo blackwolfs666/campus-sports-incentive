@@ -1,22 +1,54 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, inspect, text
 from datetime import datetime, date, timedelta
 from typing import Optional
 import base64
 import json
 
-from app.core.database import get_db
+from app.core.database import engine, get_db
 from app.core.config import settings
 from app.models.models import User, Department, StepRecord, Setting, PointsRecord, PointsType
 from app.schemas.schemas import (
     StepSyncRequest, StepSyncResponse, StepRecordResponse,
-    HomeDataResponse, MessageResponse
+    HomeDataResponse, MessageResponse, DailyGoalUpdateRequest
 )
 from app.api.auth import get_current_user_sync, get_wechat_session_key
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 router = APIRouter(prefix="/steps", tags=["步数"])
+
+_user_goal_columns_ready = False
+
+
+def ensure_user_goal_columns() -> None:
+    global _user_goal_columns_ready
+    if _user_goal_columns_ready:
+        return
+    inspector = inspect(engine)
+    columns = {item["name"] for item in inspector.get_columns("users")}
+    with engine.begin() as conn:
+        if "daily_step_goal" not in columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN daily_step_goal INT NULL COMMENT 'User daily step goal'"))
+        if "daily_goal_reset_date" not in columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN daily_goal_reset_date DATE NULL COMMENT 'Daily goal reset date'"))
+    record_columns = {item["name"] for item in inspector.get_columns("step_records")}
+    with engine.begin() as conn:
+        if "target_steps" not in record_columns:
+            conn.execute(text("ALTER TABLE step_records ADD COLUMN target_steps INT NULL COMMENT 'Daily goal snapshot'"))
+    _user_goal_columns_ready = True
+
+
+def get_global_daily_goal(db: Session) -> int:
+    setting = db.query(Setting).filter(Setting.setting_key == "daily_step_goal").first()
+    try:
+        return int(setting.setting_value) if setting and setting.setting_value else 10000
+    except (TypeError, ValueError):
+        return 10000
+
+
+def get_user_daily_goal(db: Session, user: User) -> int:
+    return int(user.daily_step_goal or get_global_daily_goal(db) or 10000)
 
 
 def decrypt_wechat_run_data(session_key: str, encrypted_data: str, iv: str) -> dict:
@@ -109,7 +141,8 @@ def upsert_step_and_points(
     user_id: int,
     steps: int,
     record_date: date,
-    distance: Optional[float] = None
+    distance: Optional[float] = None,
+    target_steps: Optional[int] = None
 ) -> StepRecord:
     distance_value = float(distance) if distance is not None else round(steps * 0.0007, 2)
     step_record = db.query(StepRecord).filter(
@@ -121,12 +154,15 @@ def upsert_step_and_points(
         step_record.steps = steps
         step_record.distance = distance_value
         step_record.source = "wechat"
+        if step_record.target_steps is None and target_steps:
+            step_record.target_steps = target_steps
     else:
         step_record = StepRecord(
             user_id=user_id,
             steps=steps,
             distance=distance_value,
             record_date=record_date,
+            target_steps=target_steps,
             source="wechat"
         )
         db.add(step_record)
@@ -178,7 +214,9 @@ async def sync_steps(
     authorization: str = Header(None)
 ):
     """同步步数"""
+    ensure_user_goal_columns()
     current_user = get_current_user_sync(authorization, db)
+    daily_goal = get_user_daily_goal(db, current_user)
     records_to_sync = []
 
     try:
@@ -214,7 +252,7 @@ async def sync_steps(
         ]
 
     for item_steps, item_date, item_distance in records_to_sync:
-        upsert_step_and_points(db, current_user.id, item_steps, item_date, item_distance)
+        upsert_step_and_points(db, current_user.id, item_steps, item_date, item_distance, daily_goal)
     
     # 更新用户总步数
     current_user.total_steps = db.query(func.sum(StepRecord.steps)).filter(
@@ -226,11 +264,7 @@ async def sync_steps(
     ).scalar() or 0
     
     # 计算连续达标天数
-    daily_goal = int(db.query(Setting).filter(
-        Setting.setting_key == "daily_step_goal"
-    ).first().setting_value or 10000)
-    
-    streak_days = calculate_streak_days(db, current_user.id, daily_goal)
+    streak_days = calculate_streak_days(db, current_user.id, daily_goal, current_user.daily_goal_reset_date)
     current_user.streak_days = streak_days
     
     db.commit()
@@ -244,12 +278,14 @@ async def sync_steps(
     )
 
 
-def calculate_streak_days(db: Session, user_id: int, daily_goal: int) -> int:
+def calculate_streak_days(db: Session, user_id: int, daily_goal: int, reset_date: Optional[date] = None) -> int:
     """计算连续达标天数"""
     streak = 0
     check_date = date.today()
     
     while True:
+        if reset_date and check_date < reset_date:
+            break
         record = db.query(StepRecord).filter(
             StepRecord.user_id == user_id,
             StepRecord.record_date == check_date
@@ -270,6 +306,7 @@ async def get_today_steps(
     authorization: str = Header(None)
 ):
     """获取今日步数"""
+    ensure_user_goal_columns()
     current_user = get_current_user_sync(authorization, db)
     
     today = date.today()
@@ -299,6 +336,7 @@ async def get_step_history(
     authorization: str = Header(None)
 ):
     """获取历史步数"""
+    ensure_user_goal_columns()
     current_user = get_current_user_sync(authorization, db)
     
     start_date = date.today() - timedelta(days=days)
@@ -311,12 +349,44 @@ async def get_step_history(
     return [StepRecordResponse.model_validate(r) for r in records]
 
 
+@router.put("/daily-goal")
+async def update_daily_goal(
+    request: DailyGoalUpdateRequest,
+    db: Session = Depends(get_db),
+    authorization: str = Header(None)
+):
+    """更新当前用户每日目标步数，并中断连续达标天数。"""
+    ensure_user_goal_columns()
+    current_user = get_current_user_sync(authorization, db)
+    old_goal = get_user_daily_goal(db, current_user)
+    db.query(StepRecord).filter(
+        StepRecord.user_id == current_user.id,
+        StepRecord.target_steps.is_(None),
+        StepRecord.record_date < date.today()
+    ).update({StepRecord.target_steps: old_goal}, synchronize_session=False)
+    db.query(StepRecord).filter(
+        StepRecord.user_id == current_user.id,
+        StepRecord.record_date == date.today()
+    ).update({StepRecord.target_steps: request.daily_goal}, synchronize_session=False)
+    current_user.daily_step_goal = request.daily_goal
+    current_user.daily_goal_reset_date = date.today()
+    current_user.streak_days = 0
+    db.commit()
+    return {
+        "success": True,
+        "daily_goal": current_user.daily_step_goal,
+        "streak_days": current_user.streak_days,
+        "message": "每日目标已更新"
+    }
+
+
 @router.get("/home", response_model=HomeDataResponse)
 async def get_home_data(
     db: Session = Depends(get_db),
     authorization: str = Header(None)
 ):
     """获取首页数据"""
+    ensure_user_goal_columns()
     current_user = get_current_user_sync(authorization, db)
     
     # 获取今日步数
@@ -330,10 +400,7 @@ async def get_home_data(
     last_sync_time = today_record.updated_at if today_record else None
     
     # 获取每日目标
-    daily_goal_setting = db.query(Setting).filter(
-        Setting.setting_key == "daily_step_goal"
-    ).first()
-    daily_goal = int(daily_goal_setting.setting_value) if daily_goal_setting else 10000
+    daily_goal = get_user_daily_goal(db, current_user)
     
     # 获取部门名称
     department_name = None

@@ -8,7 +8,7 @@
   </view>
 
   <view class="content">
-    <view class="steps-card">
+    <view class="steps-card" bindtap="promptDailyGoalReset">
       <view class="card-top">
         <text class="muted">今日进度</text>
         <view class="streak-pill">连续达标 {{streakDays}} 天</view>
@@ -29,6 +29,7 @@
         <text class="{{progressPercent >= 100 ? 'success' : ''}}">{{progressPercent >= 100 ? '已达标' : '还差 ' + remainingStepsText + ' 步'}}</text>
         <text>{{dailyGoalText}}</text>
       </view>
+      <text class="goal-reset-tip">点击重新设置每日目标步数</text>
     </view>
 
     <view class="sync-button" bindtap="syncSteps">

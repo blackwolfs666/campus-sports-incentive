@@ -85,6 +85,7 @@ class StepRecordBase(BaseModel):
     steps: int
     distance: Optional[float] = 0.0
     record_date: date
+    target_steps: Optional[int] = None
     source: str = "wechat"
 
 
@@ -148,6 +149,8 @@ class ActivityPrizeItem(BaseModel):
     image_url: Optional[str] = None
     prize_type: Optional[str] = None
     quantity: Optional[int] = None
+    award_rule_type: Optional[str] = None
+    awardRuleType: Optional[str] = None
     sort_order: Optional[int] = None
 
 
@@ -211,12 +214,14 @@ class AdminAwardRule(BaseModel):
     value: Optional[int] = None
     label: Optional[str] = None
     desc: Optional[str] = None
+    ruleRole: Optional[str] = None
 
 
 class AdminPrizeConfig(BaseModel):
     prize_id: Optional[int] = None
     name: str = ""
     quantity: Optional[int] = None
+    awardRuleType: Optional[str] = None
     image: Optional[str] = None
 
 
@@ -469,6 +474,10 @@ class HomeDataResponse(BaseModel):
     department_name: Optional[str] = None
     last_sync_time: Optional[datetime] = None
     week_challenge: Optional[dict] = None
+
+
+class DailyGoalUpdateRequest(BaseModel):
+    daily_goal: int = Field(..., ge=1000, le=100000)
 
 
 class CheckinCreate(BaseModel):

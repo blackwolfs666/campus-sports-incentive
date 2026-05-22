@@ -56,7 +56,7 @@
       </view>
       <view class="claim-content">
         <text class="claim-title">如何领取</text>
-        <text class="claim-desc">请获奖老师持本人校园卡，于本周五 17:00 前往 <text class="highlight">校工会 302 办公室</text> 领取。逾期将自动转入下一期奖池。</text>
+        <text class="claim-desc">请获奖用户持本人有效证件，于活动方通知的时间前往指定地点领取。逾期将自动转入下一期奖池。</text>
       </view>
     </section>
   </main>

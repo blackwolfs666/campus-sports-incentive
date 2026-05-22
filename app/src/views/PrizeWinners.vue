@@ -82,7 +82,7 @@
             <h4 class="font-bold text-tertiary">如何领取</h4>
             <p class="text-sm text-on-surface-variant leading-relaxed">
               请获奖老师持本人校园卡，于本周五 17:00 前往 
-              <span class="font-bold text-secondary">校工会 302 办公室</span> 领取。逾期将自动转入下一期奖池。
+              <span class="font-bold text-secondary">活动方指定地点</span> 领取。逾期将自动转入下一期奖池。
             </p>
           </div>
         </div>

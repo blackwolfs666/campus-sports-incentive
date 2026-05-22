@@ -40,6 +40,10 @@ def ensure_cas_columns() -> None:
             conn.execute(text("ALTER TABLE users ADD COLUMN cas_binded TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已绑定CAS'"))
         if "edu_person_type" not in columns:
             conn.execute(text("ALTER TABLE users ADD COLUMN edu_person_type VARCHAR(20) NULL COMMENT '身份类型'"))
+        if "daily_step_goal" not in columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN daily_step_goal INT NULL COMMENT 'User daily step goal'"))
+        if "daily_goal_reset_date" not in columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN daily_goal_reset_date DATE NULL COMMENT 'Daily goal reset date'"))
     _cas_columns_ready = True
 
 

@@ -72,6 +72,10 @@
   margin-bottom: 24rpx;
 }
 
+.steps-card:active {
+  transform: scale(0.995);
+}
+
 .card-top,
 .section-head,
 .activity-strip,
@@ -165,6 +169,14 @@
 .progress-meta .success {
   color: #16a34a;
   font-weight: 700;
+}
+
+.goal-reset-tip {
+  display: block;
+  margin-top: 18rpx;
+  color: #9ca3af;
+  font-size: 22rpx;
+  text-align: right;
 }
 
 .sync-button {
