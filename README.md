@@ -1,4 +1,4 @@
-# sportsNum
+# campus-sports-incentive
 
 一个校园活动参与、步数同步、报名打卡、排行榜、奖品兑换的小程序项目。项目包含微信小程序端、FastAPI 后端、MySQL 数据库脚本，以及一个可选的 Vue 预览端。
 
